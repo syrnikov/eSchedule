@@ -52,6 +52,26 @@ export const STRINGS = {
   stale: "Дані можуть бути застарілими",
   loadError: "Не вдалося завантажити розклад",
 
+  settingsView: {
+    back: "Назад",
+    title: "Посилання на пари",
+    deviceOnly: "Посилання зберігаються лише на цьому пристрої. Зроби експорт, щоб мати резервну копію або перенести їх на інший пристрій.",
+    pairsTitle: "Пари",
+    teachersTitle: "Запасні посилання викладачів",
+    teachersHint: "Використовуються, якщо для пари немає окремого посилання.",
+    placeholder: "https://zoom.us/j/…",
+    invalid: "Посилання має починатися з https://",
+    saved: "Збережено",
+    storageBlocked: "Не вдалося зберегти: браузер блокує сховище",
+    export: "Експортувати",
+    import: "Імпортувати",
+    exportFile: (date) => `pary-links-${date}.json`,
+    imported: (count) => `Імпортовано: ${count}`,
+    importError: "Не вдалося прочитати файл. Потрібен JSON-експорт із цього застосунку.",
+    noSchedule: "Розклад ще не завантажено, тож список пар порожній.",
+    urlLabel: (name) => `Посилання: ${name}`,
+  },
+
   // Values that come from the schedule data (not shown as-is, used for matching).
   data: {
     onlineRoom: "онлайн", // not worth showing: every class is online
@@ -64,5 +84,6 @@ export const STRINGS = {
     minutes: { one: "хв", few: "хв", many: "хв" },
     hours: { one: "год", few: "год", many: "год" },
     classes: { one: "пара", few: "пари", many: "пар" },
+    links: { one: "посилання", few: "посилання", many: "посилань" },
   },
 };

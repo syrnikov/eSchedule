@@ -7,9 +7,11 @@ import {
   formatDuration, formatRange, pluralize,
 } from "./format.js";
 import { loadSchedule } from "./schedule.js";
-import { loadLinks, findLink } from "./links.js";
+import { loadLinks, findLink, linkKey } from "./links.js";
+import { renderSettings } from "./settings.js";
 import { computeStatus } from "./status.js";
 import { startAlarmWatch } from "./alarm.js";
+import { el, icon } from "./dom.js";
 
 const RENDER_EVERY_MS = 15_000;
 const RELOAD_SCHEDULE_EVERY_MS = 30 * 60_000;
@@ -39,20 +41,6 @@ const now = () => (debugStart ? new Date(debugStart.getTime() + Date.now() - boo
 let schedule = null;
 let loadFailed = false;
 let getAlarm = () => ({ state: "unknown", seenSince: null, clearedAt: null, pending: true });
-
-// --- Tiny DOM helper: el("p", { class: "x" }, "text", childNode) ---
-function el(tag, attrs = {}, ...children) {
-  const node = document.createElement(tag);
-  for (const [key, value] of Object.entries(attrs)) {
-    if (value == null || value === false) continue;
-    node.setAttribute(key, value === true ? "" : value);
-  }
-  node.append(...children.flat().filter((c) => c != null && c !== ""));
-  return node;
-}
-
-const icon = (name, size = "") =>
-  el("span", { class: `icon ${size ? `icon--${size}` : ""}`.trim(), "aria-hidden": "true" }, name);
 
 const typeIcon = (type) => STRINGS.data.typeIcons[type] ?? STRINGS.data.defaultTypeIcon;
 const joinDot = (...parts) => parts.filter(Boolean).join(" · ");
@@ -126,7 +114,7 @@ function renderHero(status) {
         icon("videocam"), STRINGS.join)
       : el("div", { class: "no-link" },
         icon("link_off", "20"), el("span", {}, STRINGS.noLink),
-        el("a", { href: "#settings" }, STRINGS.addLink)));
+        el("a", { href: `#settings:${encodeURIComponent(linkKey(cls))}` }, STRINGS.addLink)));
   }
 
   // Small alarm notes. "paused" already says it all.
@@ -226,6 +214,27 @@ async function refreshSchedule() {
     loadFailed = !schedule; // keep showing the last good copy if we have one
   }
   render();
+  // Settings opened before the schedule arrived: fill in the list now.
+  if (settingsOpen() && settingsEmpty && schedule) route();
+}
+
+// --- Routing: "#settings" or "#settings:<link key>" opens settings, anything else the main screen ---
+let settingsEmpty = false;
+const settingsOpen = () => location.hash.startsWith("#settings");
+
+function route() {
+  const open = settingsOpen();
+  document.getElementById("main-view").hidden = open;
+  document.getElementById("settings-view").hidden = !open;
+  if (open) {
+    const [, rawKey] = location.hash.split(/:(.*)/);
+    const focusKey = rawKey ? decodeURIComponent(rawKey) : null;
+    settingsEmpty = !schedule;
+    renderSettings(document.getElementById("settings-view"), schedule, { focusKey });
+  } else {
+    render(); // links may have changed
+    window.scrollTo(0, 0);
+  }
 }
 
 function watchIconFont() {
@@ -241,8 +250,9 @@ function boot() {
   if (!debugAlarm) getAlarm = startAlarmWatch(() => render());
 
   renderClock();
-  render();
+  route();
   refreshSchedule();
+  window.addEventListener("hashchange", route);
 
   setInterval(() => {
     renderClock();

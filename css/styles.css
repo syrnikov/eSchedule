@@ -19,6 +19,8 @@
   --btn-text: #ffffff;
   --track: #e7ebf0;
   --neutral-soft: #eef1f5;
+  --input-bg: #f5f7fa;
+  --input-border: rgba(15, 23, 42, 0.2);
 
   /* Accents: only for meaning */
   --live: #147a39;
@@ -48,6 +50,8 @@
     --btn-text: #0b0d12;
     --track: rgba(255, 255, 255, 0.1);
     --neutral-soft: rgba(255, 255, 255, 0.07);
+    --input-bg: rgba(255, 255, 255, 0.05);
+    --input-border: rgba(255, 255, 255, 0.22);
 
     --live: #62d68e;
     --live-soft: rgba(98, 214, 142, 0.14);
@@ -75,7 +79,8 @@ body {
   -webkit-text-size-adjust: 100%;
 }
 
-p, h2, h3, ul { margin: 0; }
+p, h1, h2, h3, ul { margin: 0; }
+[hidden] { display: none !important; }
 a { color: inherit; }
 
 :focus-visible {
@@ -88,6 +93,12 @@ a { color: inherit; }
   max-width: 520px;
   margin: 0 auto;
   padding: max(20px, env(safe-area-inset-top)) 16px max(28px, env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+.view {
   display: flex;
   flex-direction: column;
   gap: var(--gap);
@@ -377,6 +388,110 @@ a { color: inherit; }
   color: var(--soon);
   font-weight: 500;
 }
+
+/* ---------- Settings ---------- */
+.settings-top {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 4px 4px 0;
+}
+.settings-title {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.settings-title:focus { outline: none; }
+
+.device-note {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  color: var(--muted);
+  font-size: 14px;
+}
+.device-note .icon { margin-top: 1px; }
+
+.section-hint { margin: -4px 0 8px; }
+
+.field {
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+}
+.card-title + .field,
+.section-hint + .field { border-top: 0; padding-top: 0; }
+.field:last-child { padding-bottom: 0; }
+
+.field-label {
+  display: block;
+  font-weight: 500;
+  line-height: 1.3;
+}
+.field-context {
+  margin-top: 2px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.field input {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid var(--input-border);
+  border-radius: 14px;
+  background: var(--input-bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 16px; /* 16px+ stops iOS from zooming in on focus */
+}
+.field input::placeholder { color: var(--muted); opacity: 0.7; }
+.field input:focus-visible { outline: 3px solid var(--text); outline-offset: 1px; }
+.field input[aria-invalid="true"] { border-color: var(--alarm); border-width: 2px; }
+
+.field-msg {
+  font-size: 13px;
+  min-height: 0;
+}
+.field-msg:not(:empty) { margin-top: 6px; }
+.field-msg.is-error { color: var(--alarm); font-weight: 500; }
+.field-msg.is-saved { color: var(--live); }
+
+.settings-actions {
+  display: grid;
+  gap: 12px;
+}
+@media (min-width: 420px) {
+  .settings-actions { grid-template-columns: 1fr 1fr; }
+}
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 52px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+.btn:hover { opacity: 0.9; }
+.btn:active { transform: scale(0.98); }
+.btn--primary { background: var(--btn-bg); color: var(--btn-text); }
+.btn--secondary { background: var(--card); color: var(--text); box-shadow: var(--shadow); }
+
+.settings-status {
+  text-align: center;
+  font-size: 14px;
+  color: var(--live);
+  font-weight: 500;
+}
+.settings-status:empty { display: none; }
+.settings-status.is-error { color: var(--alarm); }
 
 /* ---------- Motion ---------- */
 @media (prefers-reduced-motion: reduce) {

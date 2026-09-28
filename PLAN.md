@@ -7,8 +7,8 @@
 - [x] Phase 2 — GitHub Actions: first run green on GitHub
 - [x] Phase 3 — Static UI with the real schedule: live on GitHub Pages, e-Ukraine woff2 in `fonts/`
 - [x] Phase 4 — Status engine: `computeStatus` with alarm states, 25 status tests
-- [ ] Phase 5 — Air alarm via Cloudflare Worker: Worker + `alarm.js` written and tested; waiting for deploy
-- [ ] Phase 6 — Links settings
+- [x] Phase 5 — Air alarm via Cloudflare Worker: live at pary-alarm.noxtrnall.workers.dev
+- [x] Phase 6 — Links settings: `#settings` screen, auto-save, import/export
 - [ ] Phase 7 — Polish
 
 ## What we're building
