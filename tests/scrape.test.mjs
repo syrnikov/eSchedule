@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import {
-  kyivDate, addDays, toApiDate, rangeFor, scheduleUrl, buildSchedule, rejectReason,
+  kyivDate, addDays, toApiDate, rangeFor, scheduleUrl, buildSchedule, rejectReason, isUnchanged,
 } from "../scraper/scrape.mjs";
 
 const fixture = JSON.parse(
@@ -57,4 +57,20 @@ test("empty result is rejected only if the old file had classes in that range", 
   assert.equal(rejectReason(prevOnlyOlder, empty), null); // e.g. holidays
   assert.equal(rejectReason(null, empty), null); // first run
   assert.equal(rejectReason(prevWithClasses, { ...empty, classes: [{}] }), null);
+});
+
+test("unchanged data is only rewritten once it's 12 hours old", () => {
+  const range = { rangeFrom: "2026-09-28", rangeTo: "2026-10-11" };
+  const at = (iso) => buildSchedule(fixture, { now: new Date(iso), ...range });
+  const previous = at("2026-09-28T06:00:00Z");
+
+  assert.equal(isUnchanged(previous, at("2026-09-28T09:00:00Z"), new Date("2026-09-28T09:00:00Z")), true);
+  assert.equal(isUnchanged(previous, at("2026-09-28T18:00:00Z"), new Date("2026-09-28T18:00:00Z")), false);
+
+  const now = new Date("2026-09-28T09:00:00Z");
+  const changed = { ...at("2026-09-28T09:00:00Z"), classes: previous.classes.slice(1) };
+  assert.equal(isUnchanged(previous, changed, now), false);
+  const newDay = { ...at("2026-09-28T09:00:00Z"), rangeFrom: "2026-09-29", rangeTo: "2026-10-12" };
+  assert.equal(isUnchanged(previous, newDay, now), false);
+  assert.equal(isUnchanged(null, previous, now), false); // first run
 });

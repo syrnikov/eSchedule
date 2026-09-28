@@ -4,7 +4,7 @@
 
 - [x] Phase 0 — Reconnaissance: schedule comes from a JSON API at vnz.osvita.net (see `RECON.md`)
 - [x] Phase 1 — Scraper and parser: `npm run scrape`, 13 tests passing (`npm test`)
-- [ ] Phase 2 — GitHub Actions
+- [ ] Phase 2 — GitHub Actions: workflow written; waiting for the repo to be pushed and a first successful run
 - [ ] Phase 3 — Static UI with the real schedule
 - [ ] Phase 4 — Status engine
 - [ ] Phase 5 — Air alarm via Cloudflare Worker
@@ -129,7 +129,7 @@ Goal: find out exactly how the OSAU schedule table is loaded.
 
 ### Phase 2 — GitHub Actions
 
-`scrape.yml`: run on cron **every 3 hours** plus `workflow_dispatch` for manual runs. Node 20, run the scraper, commit `data/schedule.json` only if it changed (commit message `chore: оновлено розклад`). Remember cron is in UTC. Give the workflow `contents: write` permission.
+`scrape.yml`: run on cron **every 3 hours** plus `workflow_dispatch` for manual runs. Node 24 (Node 20 reached end-of-life in April 2026), run the tests and the scraper, commit `data/schedule.json` only if it changed (commit message `chore: оновлено розклад`). Remember cron is in UTC. Give the workflow `contents: write` permission. When the classes are unchanged, the scraper leaves the file alone unless `fetchedAt` is older than 12 h, so there are only ~2 commits a day.
 
 ### Phase 3 — Static UI with the real schedule
 

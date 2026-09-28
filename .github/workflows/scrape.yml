@@ -1,0 +1,47 @@
+# Fetches the OSAU schedule and commits data/schedule.json when it changes.
+name: Оновлення розкладу
+
+on:
+  schedule:
+    # Every 3 hours. Cron is in UTC: 00:00 UTC = 03:00 Kyiv in summer, 02:00 in winter.
+    - cron: "0 */3 * * *"
+  workflow_dispatch: # "Run workflow" button in the Actions tab
+
+permissions:
+  contents: write
+
+# Never run two scrapes at once (e.g. a manual run during a scheduled one).
+concurrency:
+  group: scrape
+  cancel-in-progress: false
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+
+      - name: Tests
+        run: npm test
+
+      # Exits non-zero on any problem, which fails the run (GitHub emails you)
+      # and leaves the last good schedule in place.
+      - name: Scrape
+        run: npm run scrape
+
+      - name: Commit if changed
+        run: |
+          if git diff --quiet -- data/schedule.json; then
+            echo "Schedule unchanged, nothing to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/schedule.json
+          git commit -m "chore: оновлено розклад"
+          git push

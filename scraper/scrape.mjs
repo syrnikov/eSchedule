@@ -18,6 +18,8 @@ const DAYS_AHEAD = 13; // today + 13 days = two weeks
 const TIME_ZONE = "Europe/Kyiv";
 const USER_AGENT = "pary-scraper/1.0 (personal schedule dashboard; GitHub Actions)";
 const TIMEOUT_MS = 30_000;
+// If nothing changed, only refresh fetchedAt this often (keeps commits to ~2/day).
+const REFRESH_AFTER_HOURS = 12;
 
 const OUT_FILE = resolve(dirname(fileURLToPath(import.meta.url)), "../data/schedule.json");
 
@@ -84,6 +86,18 @@ export function rejectReason(previous, next) {
   return null;
 }
 
+// True if the previous file already says the same thing and is recent enough,
+// so rewriting it would only bump fetchedAt and create a pointless commit.
+export function isUnchanged(previous, next, now) {
+  if (!previous?.fetchedAt) return false;
+  const sameData =
+    previous.rangeFrom === next.rangeFrom &&
+    previous.rangeTo === next.rangeTo &&
+    JSON.stringify(previous.classes) === JSON.stringify(next.classes);
+  const ageHours = (now - new Date(previous.fetchedAt)) / 3_600_000;
+  return sameData && ageHours >= 0 && ageHours < REFRESH_AFTER_HOURS;
+}
+
 async function fetchPayload(url) {
   const res = await fetch(url, {
     headers: {
@@ -117,8 +131,14 @@ async function main() {
   const payload = await fetchPayload(url);
   const next = buildSchedule(payload, { now, rangeFrom, rangeTo });
 
-  const reason = rejectReason(await readPrevious(), next);
+  const previous = await readPrevious();
+  const reason = rejectReason(previous, next);
   if (reason) throw new Error(`Refusing to overwrite: ${reason}`);
+
+  if (isUnchanged(previous, next, now)) {
+    console.log(`No changes (${next.classes.length} classes); keeping data/schedule.json as is`);
+    return;
+  }
 
   await mkdir(dirname(OUT_FILE), { recursive: true });
   await writeFile(OUT_FILE, JSON.stringify(next, null, 2) + "\n", "utf8");
