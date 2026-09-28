@@ -4,8 +4,8 @@
 
 - [x] Phase 0 — Reconnaissance: schedule comes from a JSON API at vnz.osvita.net (see `RECON.md`)
 - [x] Phase 1 — Scraper and parser: `npm run scrape`, 13 tests passing (`npm test`)
-- [ ] Phase 2 — GitHub Actions: workflow written; waiting for the repo to be pushed and a first successful run
-- [ ] Phase 3 — Static UI with the real schedule
+- [x] Phase 2 — GitHub Actions: first run green on GitHub
+- [ ] Phase 3 — Static UI with the real schedule: built and checked locally; waiting for e-Ukraine fonts and GitHub Pages
 - [ ] Phase 4 — Status engine
 - [ ] Phase 5 — Air alarm via Cloudflare Worker
 - [ ] Phase 6 — Links settings

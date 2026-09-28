@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#dcebff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0e1116" media="(prefers-color-scheme: dark)">
+  <title>Пари</title>
+
+  <!--
+    Icon font: Material Symbols Rounded, filled, subset to the icons we use.
+    ICON LIST (alphabetical, keep in sync with every icon used in js/):
+      celebration, cloud_off, coffee, edit_note, history, link_off,
+      radio_button_checked, schedule, school, science, settings, videocam, weekend
+  -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,500,1,0&icon_names=celebration,cloud_off,coffee,edit_note,history,link_off,radio_button_checked,schedule,school,science,settings,videocam,weekend&display=block">
+
+  <link rel="stylesheet" href="css/styles.css">
+  <script type="module" src="js/main.js"></script>
+</head>
+<body>
+  <main class="app">
+    <header class="top">
+      <div>
+        <p class="clock" id="clock">--:--</p>
+        <p class="date" id="date"></p>
+      </div>
+      <a class="icon-btn" id="settings-btn" href="#settings">
+        <span class="icon" aria-hidden="true">settings</span>
+      </a>
+    </header>
+
+    <section class="card hero" id="hero" aria-live="polite"></section>
+    <section class="card" id="today" hidden></section>
+    <section class="card card--compact" id="tomorrow" hidden></section>
+
+    <footer class="foot" id="footer"></footer>
+  </main>
+</body>
+</html>

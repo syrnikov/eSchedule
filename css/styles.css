@@ -1,0 +1,367 @@
+/* Пари — Дія's structure, monobank's warmth. Mobile-first. */
+
+/* e-Ukraine: put the woff2 files in /fonts (see PLAN.md, Phase 3).
+   Until they're there, the system font is used. */
+@font-face { font-family: "e-Ukraine"; src: url("../fonts/e-Ukraine-Regular.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "e-Ukraine"; src: url("../fonts/e-Ukraine-Medium.woff2") format("woff2"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "e-Ukraine"; src: url("../fonts/e-Ukraine-Bold.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+
+/* ---------- Tokens ---------- */
+:root {
+  --bg-1: #dcebff;
+  --bg-2: #d8f4e6;
+  --card: #ffffff;
+  --text: #0b0d12;
+  --muted: #566070;
+  --line: rgba(15, 23, 42, 0.08);
+  --shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 10px 30px rgba(15, 23, 42, 0.07);
+  --btn-bg: #0b0d12;
+  --btn-text: #ffffff;
+  --track: #e7ebf0;
+  --neutral-soft: #eef1f5;
+
+  /* Accents: only for meaning */
+  --live: #147a39;
+  --live-soft: #dcf5e4;
+  --soon: #9a5700;
+  --soon-soft: #fdefd3;
+  --alarm: #c21f18;
+  --alarm-soft: #fde1df;
+
+  --radius: 24px;
+  --radius-sm: 16px;
+  --gap: 16px;
+  --font: "e-Ukraine", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-1: #0e1116;
+    --bg-2: #0d1713;
+    --card: #1b1e24;
+    --text: #f3f5f8;
+    --muted: #a3acb9;
+    --line: rgba(255, 255, 255, 0.08);
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 30px rgba(0, 0, 0, 0.25);
+    /* Black on a dark card would vanish, so the pill turns white. */
+    --btn-bg: #ffffff;
+    --btn-text: #0b0d12;
+    --track: rgba(255, 255, 255, 0.1);
+    --neutral-soft: rgba(255, 255, 255, 0.07);
+
+    --live: #62d68e;
+    --live-soft: rgba(98, 214, 142, 0.14);
+    --soon: #f3b94d;
+    --soon-soft: rgba(243, 185, 77, 0.14);
+    --alarm: #ff6d63;
+    --alarm-soft: rgba(255, 109, 99, 0.16);
+  }
+}
+
+/* ---------- Base ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { background: var(--bg-2); }
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: linear-gradient(165deg, var(--bg-1) 0%, var(--bg-2) 100%);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+}
+
+p, h2, h3, ul { margin: 0; }
+a { color: inherit; }
+
+:focus-visible {
+  outline: 3px solid var(--text);
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+
+.app {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: max(20px, env(safe-area-inset-top)) 16px max(28px, env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+/* ---------- Icons (Material Symbols Rounded, filled) ---------- */
+.icon {
+  font-family: "Material Symbols Rounded";
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
+  direction: ltr;
+  font-feature-settings: "liga";
+  -webkit-font-smoothing: antialiased;
+  font-variation-settings: "FILL" 1, "wght" 500, "GRAD" 0, "opsz" 24;
+  /* Reserve the square and hide ligature text until the font is ready. */
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  overflow: hidden;
+  flex-shrink: 0;
+  visibility: hidden;
+}
+.icons-ready .icon { visibility: visible; }
+.icon--20 { font-size: 20px; font-variation-settings: "FILL" 1, "wght" 500, "GRAD" 0, "opsz" 20; }
+.icon--40 { font-size: 40px; font-variation-settings: "FILL" 1, "wght" 500, "GRAD" 0, "opsz" 40; }
+
+/* ---------- Header ---------- */
+.top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 4px 4px 0;
+}
+
+.clock {
+  font-size: 56px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.date {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 17px;
+}
+
+.icon-btn {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  text-decoration: none;
+}
+
+/* ---------- Cards ---------- */
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px;
+}
+.card--compact { padding: 16px 20px; }
+
+.card-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+
+/* ---------- Hero ---------- */
+.hero { padding: 24px 20px 20px; }
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.status-icon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  background: var(--neutral-soft);
+  color: var(--text);
+}
+.hero[data-state="live"] .status-icon { background: var(--live-soft); color: var(--live); }
+.hero[data-state="soon"] .status-icon { background: var(--soon-soft); color: var(--soon); }
+.hero[data-state="paused"] .status-icon { background: var(--alarm-soft); color: var(--alarm); }
+
+.status-label {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.hero[data-state="live"] .status-label { color: var(--live); }
+.hero[data-state="soon"] .status-label { color: var(--soon); }
+.hero[data-state="paused"] .status-label { color: var(--alarm); }
+
+.status-detail {
+  margin-top: 2px;
+  color: var(--muted);
+}
+
+.class-title {
+  margin-top: 20px;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+}
+
+.class-meta {
+  margin-top: 6px;
+  color: var(--muted);
+}
+
+.timing {
+  margin-top: 18px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+.progress {
+  margin-top: 10px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--track);
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--live);
+  transform-origin: left;
+  transition: transform 0.6s ease;
+}
+
+.btn-join {
+  margin-top: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 56px;
+  border-radius: 999px;
+  background: var(--btn-bg);
+  color: var(--btn-text);
+  font-size: 17px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+.btn-join:hover { opacity: 0.9; }
+.btn-join:active { transform: scale(0.98); }
+
+.no-link {
+  margin-top: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+  padding: 0 18px;
+  border-radius: 999px;
+  background: var(--neutral-soft);
+  color: var(--muted);
+}
+.no-link a {
+  margin-left: auto;
+  color: var(--text);
+  font-weight: 500;
+}
+
+/* ---------- Today list ---------- */
+.rows { list-style: none; padding: 0; }
+
+.row {
+  display: grid;
+  grid-template-columns: 52px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+.row:first-child { border-top: 0; padding-top: 0; }
+.row:last-child { padding-bottom: 0; }
+
+.row-time {
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  line-height: 1.25;
+}
+.row-time small {
+  display: block;
+  color: var(--muted);
+  font-weight: 400;
+  font-size: 13px;
+}
+
+.row-title {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-weight: 500;
+  line-height: 1.3;
+}
+.row-title .icon { color: var(--muted); }
+.row-sub {
+  margin-top: 2px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.row.is-past .row-time,
+.row.is-past .row-title { color: var(--muted); font-weight: 400; }
+
+.badge {
+  font-size: 13px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--live-soft);
+  color: var(--live);
+}
+
+/* ---------- Tomorrow ---------- */
+.tomorrow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.tomorrow-title { font-weight: 500; }
+.tomorrow-summary { color: var(--muted); text-align: right; }
+
+/* ---------- Footer ---------- */
+.foot {
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+  padding: 4px 0;
+}
+.foot .stale {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--soon-soft);
+  color: var(--soon);
+  font-weight: 500;
+}
+
+/* ---------- Motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}
