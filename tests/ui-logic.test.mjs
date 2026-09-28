@@ -4,7 +4,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import {
-  kyivParts, kyivLocalToDate, formatClock, formatLongDate, formatDuration, pluralize, formatIsoDayMonth,
+  kyivParts, kyivLocalToDate, formatClock, formatLongDate, formatDuration, pluralize, formatIsoDayMonth, keepName,
 } from "../js/format.js";
 import { validateSchedule } from "../js/schedule.js";
 import { findLink } from "../js/links.js";
@@ -42,6 +42,12 @@ test("Ukrainian formatting", () => {
   assert.equal(pluralize(3, STRINGS.units.classes), "3 пари");
   assert.equal(pluralize(5, STRINGS.units.classes), "5 пар");
   assert.equal(pluralize(21, STRINGS.units.classes), "21 пара");
+});
+
+test("keepName glues initials to the surname, leaves other names alone", () => {
+  assert.equal(keepName("Мартинова О. Б."), "Мартинова\u00a0О.\u00a0Б.");
+  assert.equal(keepName("Іван Петренко"), "Іван Петренко");
+  assert.equal(keepName(""), "");
 });
 
 // --- schedule.js ---

@@ -5,7 +5,7 @@ import { STRINGS } from "./strings.js";
 import { el, icon } from "./dom.js";
 import { decodeShare, diffShare } from "./share.js";
 import { loadLinks, saveLinks } from "./links.js";
-import { pluralize } from "./format.js";
+import { pluralize, keepName } from "./format.js";
 
 const T = STRINGS.shareImport;
 
@@ -58,7 +58,7 @@ export async function renderShareImport(container, fragment, onDone) {
             icon(e.kind === "teacher" ? "school" : "edit_note", "20"),
             e.kind === "teacher" ? T.teacher : T.pair,
             badge),
-          el("span", { class: "share-name" }, e.sub ? `${e.title} · ${e.sub}` : e.title),
+          el("span", { class: "share-name" }, e.sub ? `${e.title} · ${e.sub}` : keepName(e.title)),
           el("span", { class: "share-url" }, e.url),
           e.status === "replace" && el("span", { class: "share-url" }, `${T.yours} `, el("s", {}, e.current)))));
   });

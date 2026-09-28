@@ -94,5 +94,9 @@ export function formatDuration(totalMinutes) {
   return parts.join(" ");
 }
 
+// "Мартинова О. Б." -> surname and initials glued with non-breaking spaces, so a line
+// never ends with a lone initial ("Мартинова О. / Б.").
+export const keepName = (name) => (name ? name.replace(/ (?=\p{Lu}\.)/gu, "\u00a0") : name);
+
 // "08:15", "09:35" -> "08:15 – 09:35" (thin-spaced en dash)
 export const formatRange = (start, end) => `${start} – ${end}`;

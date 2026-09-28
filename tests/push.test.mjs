@@ -254,7 +254,7 @@ describe("cron reminders", () => {
     const msg = await b.decrypt(new Uint8Array(init.body));
     assert.deepEqual(Object.keys(msg).sort(), ["body", "tag", "title"]);
     assert.equal(msg.title.replace(/ /g, " "), "Через 5 хв — Іноземна мова 🎓");
-    assert.equal(msg.body, "Практичні · Насакіна С. В. · початок о 08:15");
+    assert.equal(msg.body.replace(/\u00a0/g, " "), "Практичні · Насакіна С. В. · початок о 08:15");
     assert.doesNotMatch(JSON.stringify(msg), /https?:/);
 
     await w.cron("2026-09-28T08:11"); // same class: no repeat

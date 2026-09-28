@@ -12,8 +12,8 @@ import { writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
 export const ICONS = [
-  "add_box", "arrow_back", "celebration", "check_circle", "cloud_off", "coffee", "download",
-  "edit_note", "expand_more", "group", "history", "ios_share", "link_off", "lock", "notifications",
+  "add_box", "add_link", "arrow_back", "celebration", "check_circle", "cloud_off", "coffee", "download",
+  "edit_note", "expand_more", "group", "history", "ios_share", "lock", "notifications",
   "radio_button_checked", "schedule", "school", "science", "settings", "upload", "videocam",
   "warning", "weekend",
 ];

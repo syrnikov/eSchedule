@@ -86,7 +86,7 @@ test("tomorrow: early start gets sympathy, late start gets joy", () => {
   assert.ok(t.normal.includes(tail("10:59")));
   assert.ok(t.late.includes(tail("11:00")));
   const { line, sub } = tomorrowText([cls("08:15"), cls("09:45")], "2026-09-28");
-  assert.ok(line.startsWith("Завтра о 08:15 — "));
+  assert.ok(plain(line).startsWith("Завтра о 08:15 — "));
   assert.equal(plain(sub), "Усього 2 пари");
   const none = tomorrowText([], "2026-09-28");
   assert.ok(t.none.includes(none.line));

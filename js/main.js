@@ -4,7 +4,7 @@ import { STRINGS, pick } from "./strings.js";
 import {
   kyivParts, kyivLocalToDate, addDays, weekdayOf, toMinutes,
   formatClock, formatLongDate, formatDayMonth, formatIsoDayMonth,
-  formatDuration, formatRange, pluralize,
+  formatDuration, formatRange, pluralize, keepName,
 } from "./format.js";
 import { loadSchedule } from "./schedule.js";
 import { loadLinks, findLink, linkKey, teacherKey } from "./links.js";
@@ -130,7 +130,7 @@ function renderHero(status) {
       el("div", { class: "class-kicker" },
         el("span", { class: `type-chip${filled ? " type-chip--filled" : ""}` }, icon(typeIcon(cls.type), "20"), cls.type)),
       el("h2", { class: "class-title" }, cls.discipline),
-      el("p", { class: "class-meta" }, joinDot(cls.teacher, showRoom(cls.room))),
+      el("p", { class: "class-meta" }, joinDot(keepName(cls.teacher), showRoom(cls.room))),
       el("div", { class: "timing" }, el("span", {}, formatRange(cls.start, cls.end))),
     );
     if (status.state === "live" || status.state === "resumed") {
@@ -144,11 +144,12 @@ function renderHero(status) {
     const joinClass = status.state === "paused" ? "btn-join btn-join--secondary" : "btn-join";
     parts.push(url
       ? joinLink(cls, url, joinClass)
-      : el("div", { class: "no-link" },
-        icon("link_off", "20"), el("span", {}, STRINGS.noLink),
-        // Teacher links are the main way to add links; classes without a teacher use their own.
-        el("a", { href: `#settings:${encodeURIComponent(cls.teacher ? teacherKey(cls.teacher) : linkKey(cls))}` },
-          STRINGS.addLink)));
+      // No link yet: the whole pill is one action. Teacher links are the main way to add links;
+      // classes without a teacher use their own.
+      : el("a", {
+        class: "no-link",
+        href: `#settings:${encodeURIComponent(cls.teacher ? teacherKey(cls.teacher) : linkKey(cls))}`,
+      }, icon("add_link"), STRINGS.addLink));
   }
 
   // Small alarm notes. "paused" already says it all.
@@ -178,7 +179,7 @@ function renderToday(status) {
       el("div", { class: "row-time" }, c.start, el("small", {}, c.end)),
       el("div", {},
         el("div", { class: "row-title" }, icon(typeIcon(c.type), "20"), el("span", {}, c.discipline)),
-        el("div", { class: "row-sub" }, joinDot(c.type, c.teacher, showRoom(c.room)))),
+        el("div", { class: "row-sub" }, joinDot(c.type, keepName(c.teacher), showRoom(c.room)))),
       live ? el("span", { class: "badge" }, STRINGS.nowBadge) : el("span"));
   });
 
@@ -439,6 +440,8 @@ function boot() {
   watchIconFont();
   registerServiceWorker();
   refreshStats();
+  // iOS Safari only applies :active (our press-in effect) when the page listens for touches.
+  document.addEventListener("touchstart", () => {}, { passive: true });
   if (!debugAlarm) getAlarm = startAlarmWatch(() => render());
 
   renderClock();

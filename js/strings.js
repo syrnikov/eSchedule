@@ -23,8 +23,8 @@ export const STRINGS = {
 
   // Header: one line about the day.
   summary: {
-    ahead: (count, end) => `${count} сьогодні, фініш о ${end}`,
-    left: (count, end) => `Ще ${count}, фініш о ${end}`,
+    ahead: (count, end) => `${count} сьогодні, фініш о ${end}`,
+    left: (count, end) => `Ще ${count}, фініш о ${end}`,
     done: (count) => [
       `${count} позаду — решта дня твоя`,
       `${count} позаду. Можна видихнути`,
@@ -38,7 +38,7 @@ export const STRINGS = {
   status: {
     live: "Наживо",
     soon: (mins) => `Почнеться за ${mins} хв`,
-    upcoming: (time) => `Перша пара о ${time}`,
+    upcoming: (time) => `Перша пара о ${time}`,
     paused: "Пауза · повітряна тривога",
     resumed: "Відбій! Повертаємось на пару 🙌",
     break: "Перерва",
@@ -60,8 +60,8 @@ export const STRINGS = {
       "Ще є хвилинка видихнути",
     ],
     startsIn: (duration) => `Через ${duration}`,
-    nextAt: (time) => `Далі о ${time} — можна перепочити`,
-    tomorrowFirst: (time) => `Завтра перша пара о ${time}`,
+    nextAt: (time) => `Далі о ${time} — можна перепочити`,
+    tomorrowFirst: (time) => `Завтра перша пара о ${time}`,
     nextOn: (when) => `Наступна пара ${when}`,
     noneAhead: "Попереду пар немає",
     nodata: "Спробуй оновити пізніше",
@@ -79,8 +79,7 @@ export const STRINGS = {
   },
 
   join: "Приєднатися",
-  noLink: "Посилання ще не додано",
-  addLink: "Додати",
+  addLink: "Додати посилання",
   settings: "Налаштування",
 
   // "Сьогодні в тебе 3 пари"
@@ -92,7 +91,7 @@ export const STRINGS = {
     // Before this time the start counts as early; from `lateFrom` on, as a lie-in.
     earlyBefore: "09:00",
     lateFrom: "11:00",
-    line: (time, tail) => `Завтра о ${time} — ${tail}`,
+    line: (time, tail) => `Завтра о ${time} — ${tail}`,
     early: ["рано, але ти впораєшся ☕", "ставимо будильник ⏰", "кава буде доречною ☕"],
     normal: ["все за планом", "звичний ритм", "без поспіху"],
     late: ["можна трохи поспати 😴", "ранок вільний 🙌", "виспишся 😴"],
@@ -141,14 +140,14 @@ export const STRINGS = {
   // Push notification texts. Sent by the Worker, so: no names, no links.
   push: {
     reminderTitle: (duration, discipline) => `Через ${duration} — ${discipline} 🎓`,
-    reminderBody: (type, teacher, start) => [type, teacher, `початок о ${start}`].filter(Boolean).join(" · "),
+    reminderBody: (type, teacher, start) => [type, teacher, `початок о ${start}`].filter(Boolean).join(" · "),
     alertTitle: (region) => `Повітряна тривога · ${region}`,
     alertBody: "Пара на паузі. Бережи себе 🙏",
     clearTitle: "Відбій! Повертаємось на пару 🙌",
     clearBody: (duration) => (duration ? `Тривога тривала ${duration}` : "Пара продовжується"),
   },
 
-  updatedAt: (date, time) => `Розклад оновлено ${date} о ${time}`,
+  updatedAt: (date, time) => `Розклад оновлено ${date} о ${time}`,
   stale: "Розклад давно не оновлювався",
   loadError: "Не вдалося завантажити розклад",
 

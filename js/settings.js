@@ -5,7 +5,7 @@
 
 import { STRINGS } from "./strings.js";
 import { el, icon } from "./dom.js";
-import { kyivParts, pluralize } from "./format.js";
+import { kyivParts, pluralize, keepName } from "./format.js";
 import {
   loadLinks, saveLinks, setLink, isValidUrl, collectPairs, collectTeachers,
 } from "./links.js";
@@ -299,10 +299,10 @@ export function renderSettings(container, schedule, { focusKey = null, message =
 
   // --- Group: links ---
   const teacherFields = collectTeachers(classes).map((t) =>
-    field(t.key, t.teacher, t.disciplines.join(", ")));
+    field(t.key, keepName(t.teacher), t.disciplines.join(", ")));
 
   const pairs = collectPairs(classes);
-  const pairFields = pairs.map((p) => field(p.key, `${p.discipline} · ${p.type}`, p.teachers.join(", ")));
+  const pairFields = pairs.map((p) => field(p.key, `${p.discipline} · ${p.type}`, p.teachers.map(keepName).join(", ")));
   const savedPairs = pairs.filter((p) => links[p.key]).length;
 
   // Per-class links are the exception, so they start collapsed.
