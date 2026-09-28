@@ -16,6 +16,8 @@ const STALE_AFTER_MS = 24 * 3_600_000;
 
 const STATUS_ICONS = {
   live: "radio_button_checked",
+  paused: "warning",
+  resumed: "check_circle",
   soon: "schedule",
   upcoming: "schedule",
   break: "coffee",
@@ -24,8 +26,12 @@ const STATUS_ICONS = {
   nodata: "cloud_off",
 };
 
-// --- Clock (supports ?now=2026-09-28T08:30 for checking states by hand) ---
-const debugStart = kyivLocalToDate(new URLSearchParams(location.search).get("now") ?? "");
+// --- Debug params for checking states by hand ---
+//   ?now=2026-09-28T08:30          fake the clock (Kyiv time)
+//   ?alarm=alert|unknown|resumed   fake the alarm (until Phase 5 wires the real feed)
+const params = new URLSearchParams(location.search);
+const debugStart = kyivLocalToDate(params.get("now") ?? "");
+const debugAlarm = params.get("alarm");
 const bootedAt = Date.now();
 const now = () => (debugStart ? new Date(debugStart.getTime() + Date.now() - bootedAt) : new Date());
 
@@ -63,6 +69,10 @@ function nextClassText(today, nextClass) {
 function describe(status) {
   const { state, cls } = status;
   switch (state) {
+    case "paused":
+      return { label: STRINGS.status.paused, detail: STRINGS.detail.paused };
+    case "resumed":
+      return { label: STRINGS.status.resumed, detail: STRINGS.detail.resumed };
     case "live":
       return { label: STRINGS.status.live, detail: STRINGS.detail.left(formatDuration(status.minutesLeft)) };
     case "soon":
@@ -102,7 +112,7 @@ function renderHero(status) {
       el("p", { class: "class-meta" }, joinDot(cls.type, cls.teacher, showRoom(cls.room))),
       el("div", { class: "timing" }, el("span", {}, formatRange(cls.start, cls.end))),
     );
-    if (status.state === "live") {
+    if (status.state === "live" || status.state === "resumed") {
       const fill = el("div", { class: "progress-fill" });
       fill.style.transform = `scaleX(${status.progress.toFixed(4)})`;
       parts.push(el("div", { class: "progress", "aria-hidden": "true" }, fill));
@@ -115,6 +125,13 @@ function renderHero(status) {
       : el("div", { class: "no-link" },
         icon("link_off", "20"), el("span", {}, STRINGS.noLink),
         el("a", { href: "#settings" }, STRINGS.addLink)));
+  }
+
+  // Small alarm notes. "paused" already says it all.
+  if (status.alarm === "alert" && status.state !== "paused") {
+    parts.push(el("p", { class: "alarm-note alarm-note--active" }, icon("warning", "20"), STRINGS.alarm.active));
+  } else if (status.alarm === "unknown") {
+    parts.push(el("p", { class: "alarm-note" }, STRINGS.alarm.unknown));
   }
 
   hero.dataset.state = status.state;
@@ -177,9 +194,18 @@ function renderClock() {
   if (dateEl.textContent !== date) dateEl.textContent = date;
 }
 
+// Phase 5 replaces this with the real feed from alarm.js.
+function currentAlarm() {
+  const t = now();
+  if (debugAlarm === "alert") return { state: "alert", seenSince: t, clearedAt: null };
+  if (debugAlarm === "unknown") return { state: "unknown", seenSince: null, clearedAt: null };
+  if (debugAlarm === "resumed") return { state: "clear", seenSince: null, clearedAt: new Date(debugStart ?? bootedAt) };
+  return { state: "clear", seenSince: null, clearedAt: null };
+}
+
 let lastMinute = -1;
 function render() {
-  const status = computeStatus(now(), schedule, { state: "clear" }); // alarm is faked until Phase 5
+  const status = computeStatus(now(), schedule, currentAlarm());
   renderHero(status);
   renderToday(status);
   renderTomorrow(status);

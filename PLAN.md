@@ -6,7 +6,7 @@
 - [x] Phase 1 — Scraper and parser: `npm run scrape`, 13 tests passing (`npm test`)
 - [x] Phase 2 — GitHub Actions: first run green on GitHub
 - [x] Phase 3 — Static UI with the real schedule: live on GitHub Pages, e-Ukraine woff2 in `fonts/`
-- [ ] Phase 4 — Status engine
+- [x] Phase 4 — Status engine: `computeStatus` with alarm states, 26 status tests
 - [ ] Phase 5 — Air alarm via Cloudflare Worker
 - [ ] Phase 6 — Links settings
 - [ ] Phase 7 — Polish
@@ -172,9 +172,14 @@ Build the main screen using `data/schedule.json`, with alarm state faked as `"cl
 | `done` | no more classes today | На сьогодні все 🎉 | Завтра перша пара о 09:45 |
 | `weekend` | Sat/Sun with no classes | Вихідні | Наступна пара в понеділок |
 | `nodata` | schedule missing/stale for today | Немає розкладу | Спробуй оновити пізніше |
+| `upcoming` | first class today is more than 15 min away | Перша пара о 08:15 | Через 1 год 15 хв |
+
+A weekday with no classes uses the `weekend` state with the label «Сьогодні пар немає».
 
 Rules:
 
+- The alarm input is `{ state, seenSince, clearedAt }`; `clearedAt` (when the last alert ended) is what makes `resumed` possible.
+- An alarm outside class time doesn't change the state, but the hero shows a red note «Повітряна тривога · Одеська область».
 - During an alarm, the class's scheduled end time does **not** change; we just show it as paused.
 - If the alarm state is `"unknown"` (feed unreachable), **never show "no alarm"**. Show the normal status plus a small grey note «Статус тривоги невідомий».
 - The alarm state gets **zero jokes**. Warm tone everywhere else, serious when it matters.

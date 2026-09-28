@@ -1,4 +1,5 @@
-// Tests for the browser modules that don't touch the DOM: format, schedule, links, status.
+// Tests for the browser modules that don't touch the DOM: format, schedule, links.
+// status.js has its own file: status.test.mjs.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
@@ -7,7 +8,6 @@ import {
 } from "../js/format.js";
 import { validateSchedule } from "../js/schedule.js";
 import { findLink } from "../js/links.js";
-import { computeStatus } from "../js/status.js";
 import { STRINGS } from "../js/strings.js";
 import { buildSchedule } from "../scraper/scrape.mjs";
 
@@ -61,61 +61,4 @@ test("findLink prefers discipline|type, then the teacher fallback", () => {
   assert.equal(findLink({ "Трактори і автомобілі|Лекції": "https://a", "@Дядюра К. О.": "https://b" }, cls), "https://b");
   assert.equal(findLink({}, cls), null);
   assert.equal(findLink({ "@": "https://x" }, { ...cls, teacher: "" }), null);
-});
-
-// --- status.js (basic cases; the full table incl. alarms is Phase 4) ---
-
-const status = (local) => computeStatus(at(local), schedule);
-
-test("status: before, during and between classes", () => {
-  assert.equal(status("2026-09-28T07:00").state, "upcoming");
-  assert.equal(status("2026-09-28T08:00").state, "soon");
-  assert.equal(status("2026-09-28T08:00").minutesUntil, 15);
-
-  const live = status("2026-09-28T08:30");
-  assert.equal(live.state, "live");
-  assert.equal(live.cls.discipline, "Іноземна мова");
-  assert.equal(live.minutesLeft, 65);
-
-  assert.equal(status("2026-09-28T09:38").state, "soon"); // 7 min to the next class
-});
-
-test("status: first class later today, and done for the day", () => {
-  assert.equal(status("2026-09-30T08:00").state, "upcoming"); // Wed starts at 09:45
-  const done = status("2026-09-28T13:00");
-  assert.equal(done.state, "done");
-  assert.equal(done.nextClass.date, "2026-09-29");
-});
-
-// The fixture week has no gap longer than 15 min, so build one.
-test("status: break with a real gap", () => {
-  const s = validateSchedule({
-    ...schedule,
-    classes: [
-      { date: "2026-09-28", start: "08:15", end: "09:35", discipline: "A", type: "Лекції", room: "", teacher: "" },
-      { date: "2026-09-28", start: "12:50", end: "14:10", discipline: "B", type: "Лекції", room: "", teacher: "" },
-    ],
-  });
-  const brk = computeStatus(at("2026-09-28T10:00"), s);
-  assert.equal(brk.state, "break");
-  assert.equal(brk.cls.discipline, "B");
-});
-
-test("status: Wed 12:36 is soon for Кураторська година", () => {
-  const s = status("2026-09-30T12:36");
-  assert.equal(s.state, "soon");
-  assert.equal(s.cls.discipline, "Кураторська година");
-  assert.equal(findLink({}, s.cls), null); // no link → no button
-});
-
-test("status: weekend, weekday without classes, no data", () => {
-  const sat = status("2026-10-03T10:00");
-  assert.equal(sat.state, "weekend");
-  assert.equal(sat.isWeekend, true);
-  assert.equal(sat.nextClass, null); // next week isn't in the fixture
-  const weekdayOff = computeStatus(at("2026-10-07T10:00"), schedule); // inside range, no classes
-  assert.equal(weekdayOff.state, "weekend");
-  assert.equal(weekdayOff.isWeekend, false);
-  assert.equal(computeStatus(at("2026-10-12T10:00"), schedule).state, "nodata"); // past rangeTo
-  assert.equal(computeStatus(at("2026-09-28T10:00"), null).state, "nodata");
 });

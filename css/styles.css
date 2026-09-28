@@ -189,6 +189,8 @@ a { color: inherit; }
 .hero[data-state="live"] .status-icon { background: var(--live-soft); color: var(--live); }
 .hero[data-state="soon"] .status-icon { background: var(--soon-soft); color: var(--soon); }
 .hero[data-state="paused"] .status-icon { background: var(--alarm-soft); color: var(--alarm); }
+.hero[data-state="resumed"] .status-icon { background: var(--live-soft); color: var(--live); }
+.hero[data-state="paused"] { box-shadow: var(--shadow), inset 0 0 0 2px var(--alarm); }
 
 .status-label {
   font-size: 20px;
@@ -198,6 +200,24 @@ a { color: inherit; }
 .hero[data-state="live"] .status-label { color: var(--live); }
 .hero[data-state="soon"] .status-label { color: var(--soon); }
 .hero[data-state="paused"] .status-label { color: var(--alarm); }
+.hero[data-state="resumed"] .status-label { color: var(--live); }
+.hero[data-state="paused"] .progress-fill { background: var(--alarm); }
+
+.alarm-note {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--muted);
+}
+.alarm-note--active {
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--alarm-soft);
+  color: var(--alarm);
+  font-weight: 500;
+}
 
 .status-detail {
   margin-top: 2px;
