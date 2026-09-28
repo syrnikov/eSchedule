@@ -6,7 +6,7 @@
 - [x] Phase 1 — Scraper and parser: `npm run scrape`, 13 tests passing (`npm test`)
 - [x] Phase 2 — GitHub Actions: first run green on GitHub
 - [x] Phase 3 — Static UI with the real schedule: live on GitHub Pages, e-Ukraine woff2 in `fonts/`
-- [x] Phase 4 — Status engine: `computeStatus` with alarm states, 26 status tests
+- [x] Phase 4 — Status engine: `computeStatus` with alarm states, 25 status tests
 - [ ] Phase 5 — Air alarm via Cloudflare Worker
 - [ ] Phase 6 — Links settings
 - [ ] Phase 7 — Polish
