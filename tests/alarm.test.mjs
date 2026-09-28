@@ -40,6 +40,19 @@ test("alert → clear sets clearedAt; clear → clear keeps it", () => {
   assert.deepEqual(s.clearedAt, t("08:40"));
 });
 
+test("alert → clear remembers when that alert started; the next alert doesn't erase it", () => {
+  let s = nextAlarmState(INITIAL, { ok: true, alert: true }, t("08:20"));
+  assert.equal(s.lastAlertSince, null);
+  s = nextAlarmState(s, { ok: true, alert: false }, t("08:43"));
+  assert.deepEqual(s.lastAlertSince, t("08:20"));
+  s = nextAlarmState(s, { ok: true, alert: false }, t("08:44"));
+  assert.deepEqual(s.lastAlertSince, t("08:20"));
+  s = nextAlarmState(s, { ok: true, alert: true }, t("09:00"));
+  assert.deepEqual(s.lastAlertSince, t("08:20"));
+  s = nextAlarmState(s, { ok: true, alert: false }, t("09:10"));
+  assert.deepEqual(s.lastAlertSince, t("09:00"));
+});
+
 test("unknown → clear doesn't invent an end time", () => {
   const s = nextAlarmState(INITIAL, { ok: true, alert: false }, t("08:40"));
   assert.equal(s.state, "clear");
@@ -76,6 +89,9 @@ test("end to end: alarm during a class pauses it, then resumes", () => {
   a = nextAlarmState(a, { ok: true, alert: true }, t("08:30"));
   assert.equal(computeStatus(t("08:30"), schedule, a).state, "paused");
   a = nextAlarmState(a, { ok: true, alert: false }, t("08:50"));
-  assert.equal(computeStatus(t("08:52"), schedule, a).state, "resumed");
+  const resumed = computeStatus(t("08:52"), schedule, a);
+  assert.equal(resumed.state, "resumed");
+  assert.deepEqual(resumed.alertSince, t("08:30"));
+  assert.deepEqual(resumed.clearedAt, t("08:50"));
   assert.equal(computeStatus(t("09:00"), schedule, a).state, "live");
 });

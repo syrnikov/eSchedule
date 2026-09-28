@@ -48,6 +48,13 @@ const PAIRS = [
   ["live", "live-soft"], ["soon", "soon-soft"], ["alarm", "alarm-soft"],
   ["muted", "neutral-soft"], ["text", "input-bg"], ["muted", "input-bg"],
   ["btn-text", "btn-bg"],
+  // Secondary join button during an alert; hero text over the soon/alarm wash.
+  ["text", "neutral-soft"], ["muted", "soon-soft"], ["muted", "alarm-soft"],
+  // Subject accents: chip text and hero text over the accent wash.
+  ...[1, 2, 3, 4, 5, 6].flatMap((n) => [
+    [`accent-${n}`, "card"], [`accent-${n}`, `accent-${n}-soft`],
+    ["text", `accent-${n}-soft`], ["muted", `accent-${n}-soft`],
+  ]),
 ];
 
 for (const [name, theme] of [["light", light], ["dark", dark]]) {

@@ -1,32 +1,73 @@
 // All UI copy lives here. Informal «ти», sentence case, real dashes and quotes.
-//   = non-breaking space (keeps "15 хв" on one line).
+//   = non-breaking space (keeps "15 хв" on one line).
+// Voice: a friend who knows your schedule. Warm, short, lightly funny; never sarcastic
+// about the war or the student. At most one emoji per string.
+//
+// Pools (arrays) are variants of often-seen strings. pick() chooses one per day, so the
+// text changes from day to day but never flickers between re-renders.
 
 export const STRINGS = {
   appTitle: "Пари",
 
+  // Header: greeting by time of day (Kyiv). name is "" when the student skipped it.
+  greeting: {
+    morning: (name) => (name ? `Доброго ранку, ${name}!` : "Доброго ранку!"),
+    day: (name) => (name ? `Добрий день, ${name}!` : "Добрий день!"),
+    evening: (name) => (name ? `Добрий вечір, ${name}!` : "Добрий вечір!"),
+    night: [
+      (name) => (name ? `Ще не спиш, ${name}?` : "Ще не спиш?"),
+      (name) => (name ? `Нічна зміна, ${name}? 🦉` : "Нічна зміна? 🦉"),
+      (name) => (name ? `${name}, час потроху спати 🌙` : "Час потроху спати 🌙"),
+    ],
+  },
+
+  // Header: one line about the day.
+  summary: {
+    ahead: (count, end) => `${count} сьогодні, фініш о ${end}`,
+    left: (count, end) => `Ще ${count}, фініш о ${end}`,
+    done: (count) => [
+      `${count} позаду — решта дня твоя`,
+      `${count} позаду. Можна видихнути`,
+    ],
+    free: [
+      "Сьогодні пар немає — відпочивай 😌",
+      "Пар сьогодні немає. Заслужений відпочинок 😌",
+    ],
+  },
+
   status: {
     live: "Наживо",
-    soon: (mins) => `Почнеться за ${mins} хв`,
+    soon: (mins) => `Почнеться за ${mins} хв`,
     upcoming: (time) => `Перша пара о ${time}`,
     paused: "Пауза · повітряна тривога",
-    resumed: "Відбій тривоги",
+    resumed: "Відбій! Повертаємось на пару 🙌",
     break: "Перерва",
-    done: "На сьогодні все 🎉",
+    done: "На сьогодні все. Ти молодець 🎉",
     weekend: "Вихідні",
-    dayOff: "Сьогодні пар немає",
+    dayOff: "Вільний день",
     nodata: "Немає розкладу",
   },
 
   detail: {
-    left: (duration) => `Ще ${duration}`,
+    left: (duration) => [
+      `Ще ${duration} — тримайся 💪`,
+      `Ще ${duration} — ти впораєшся`,
+      `Ще ${duration}, а потім перерва`,
+    ],
+    soon: [
+      "Встигнеш налити чаю ☕",
+      "Час знайти навушники 🎧",
+      "Ще є хвилинка видихнути",
+    ],
     startsIn: (duration) => `Через ${duration}`,
-    nextAt: (time) => `Далі о ${time}`,
+    nextAt: (time) => `Далі о ${time} — можна перепочити`,
     tomorrowFirst: (time) => `Завтра перша пара о ${time}`,
     nextOn: (when) => `Наступна пара ${when}`,
     noneAhead: "Попереду пар немає",
     nodata: "Спробуй оновити пізніше",
     paused: "Одеська область. Бережи себе 🙏",
     resumed: "Пара продовжується",
+    alertLasted: (duration) => `Тривога тривала ${duration}`,
   },
 
   // "Наступна пара в понеділок" — preposition depends on the next word.
@@ -38,23 +79,51 @@ export const STRINGS = {
   },
 
   join: "Приєднатися",
-  noLink: "Посилання немає",
+  noLink: "Посилання ще не додано",
   addLink: "Додати",
   settings: "Налаштування",
 
-  today: "Сьогодні",
-  tomorrow: "Завтра",
-  tomorrowSummary: (time, count) => `Перша пара о ${time} · ${count}`,
-  tomorrowNone: "Пар немає",
+  // "Сьогодні в тебе 3 пари"
+  today: (count) => `Сьогодні в тебе ${count}`,
   nowBadge: "зараз",
 
+  // Tomorrow card. The tone depends on how early the first class is.
+  tomorrow: {
+    // Before this time the start counts as early; from `lateFrom` on, as a lie-in.
+    earlyBefore: "09:00",
+    lateFrom: "11:00",
+    line: (time, tail) => `Завтра о ${time} — ${tail}`,
+    early: ["рано, але ти впораєшся ☕", "ставимо будильник ⏰", "кава буде доречною ☕"],
+    normal: ["все за планом", "звичний ритм", "без поспіху"],
+    late: ["можна трохи поспати 😴", "ранок вільний 🙌", "виспишся 😴"],
+    count: (count) => `Усього ${count}`,
+    none: ["Завтра пар немає — можна видихнути 😌", "Завтра вільний день 🙌"],
+  },
+
   updatedAt: (date, time) => `Розклад оновлено ${date} о ${time}`,
-  stale: "Дані можуть бути застарілими",
+  stale: "Розклад давно не оновлювався",
   loadError: "Не вдалося завантажити розклад",
+
+  // First launch
+  welcome: {
+    hello: "Привіт! 👋",
+    intro: "Я підкажу, яка зараз пара, і дам знати, коли вона на паузі через тривогу.",
+    question: "Як до тебе звертатися?",
+    hint: "Напиши так, як тобі приємно чути: «Артеме», «Олю». Це лишиться тільки на цьому пристрої.",
+    placeholder: "Наприклад, Артеме",
+    next: "Далі",
+    skip: "Пропустити",
+  },
 
   settingsView: {
     back: "Назад",
     title: "Налаштування",
+
+    // Group: about you
+    profileGroup: "Про тебе",
+    nameLabel: "Як до тебе звертатися",
+    nameHint: "Для привітання на головному екрані. Можна залишити порожнім.",
+    namePlaceholder: "Наприклад, Артеме",
 
     // Group: links
     linksGroup: "Посилання",
@@ -95,6 +164,8 @@ export const STRINGS = {
     onlineRoom: "онлайн", // not worth showing: every class is online
     typeIcons: { "Лекції": "school", "Практичні": "edit_note", "Лабораторні": "science" },
     defaultTypeIcon: "school",
+    // Lectures get a filled chip; everything hands-on gets an outlined one.
+    filledTypes: ["Лекції"],
   },
 
   // Plural forms for Intl.PluralRules("uk"): one / few / many.
@@ -105,3 +176,20 @@ export const STRINGS = {
     links: { one: "посилання", few: "посилання", many: "посилань" },
   },
 };
+
+// Small, stable string hash (FNV-1a). Same input → same number, on every device.
+export function hash(text) {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) {
+    h ^= text.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return h >>> 0;
+}
+
+// One variant from a pool, fixed for a given day + slot (so it doesn't flicker).
+// pick(STRINGS.detail.soon, "2026-09-28", "soon:08:15")
+export function pick(pool, day, slot = "") {
+  if (!Array.isArray(pool)) return pool;
+  return pool[hash(`${day}|${slot}`) % pool.length];
+}

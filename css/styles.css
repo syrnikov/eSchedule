@@ -30,6 +30,21 @@
   --alarm: #c21f18;
   --alarm-soft: #fde1df;
 
+  /* Subject accents: each subject hashes to one (js/voice.js accentIndex).
+     Used for the hero's soft wash and the class type chip, never for body text. */
+  --accent-1: #1d5bb8;
+  --accent-1-soft: #e4eefc;
+  --accent-2: #6b3fbf;
+  --accent-2-soft: #efe8fc;
+  --accent-3: #0a716c;
+  --accent-3-soft: #dcf3f0;
+  --accent-4: #ad2f5c;
+  --accent-4-soft: #fce6ee;
+  --accent-5: #8e3a8e;
+  --accent-5-soft: #f8e6f7;
+  --accent-6: #0b6590;
+  --accent-6-soft: #def0f9;
+
   --radius: 24px;
   --radius-sm: 16px;
   --gap: 16px;
@@ -59,6 +74,19 @@
     --soon-soft: rgba(243, 185, 77, 0.14);
     --alarm: #ff6d63;
     --alarm-soft: rgba(255, 109, 99, 0.16);
+
+    --accent-1: #8db5ff;
+    --accent-1-soft: rgba(141, 181, 255, 0.16);
+    --accent-2: #bda3ff;
+    --accent-2-soft: rgba(189, 163, 255, 0.16);
+    --accent-3: #5fd2c6;
+    --accent-3-soft: rgba(95, 210, 198, 0.14);
+    --accent-4: #ff8fb4;
+    --accent-4-soft: rgba(255, 143, 180, 0.15);
+    --accent-5: #f09ef0;
+    --accent-5-soft: rgba(240, 158, 240, 0.15);
+    --accent-6: #6fc6ef;
+    --accent-6-soft: rgba(111, 198, 239, 0.15);
   }
 }
 
@@ -148,21 +176,32 @@ a { color: inherit; }
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding: 4px 4px 0;
+  gap: 12px;
+  padding: 4px 4px 4px;
 }
+.top .icon-btn { flex-shrink: 0; }
 
-.clock {
-  font-size: 56px;
-  font-weight: 500;
-  line-height: 1;
-  letter-spacing: -0.02em;
+/* Date + time: small, above the greeting */
+.date {
+  color: var(--muted);
+  font-size: 14px;
   font-variant-numeric: tabular-nums;
 }
+.date::first-letter { text-transform: uppercase; }
 
-.date {
-  margin-top: 8px;
-  color: var(--muted);
+.greeting {
+  margin-top: 6px;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+}
+
+.day-summary {
+  margin-top: 6px;
   font-size: 17px;
+  line-height: 1.35;
 }
 
 .icon-btn {
@@ -193,7 +232,22 @@ a { color: inherit; }
 }
 
 /* ---------- Hero ---------- */
-.hero { padding: 24px 20px 20px; }
+/* A soft wash in the corner: the subject's accent, or the state colour when that matters more. */
+.hero {
+  --wash: var(--accent-soft, transparent);
+  padding: 24px 20px 20px;
+  background:
+    radial-gradient(130% 90% at 100% 0%, var(--wash) 0%, transparent 65%),
+    var(--card);
+}
+.hero[data-accent="1"] { --accent: var(--accent-1); --accent-soft: var(--accent-1-soft); }
+.hero[data-accent="2"] { --accent: var(--accent-2); --accent-soft: var(--accent-2-soft); }
+.hero[data-accent="3"] { --accent: var(--accent-3); --accent-soft: var(--accent-3-soft); }
+.hero[data-accent="4"] { --accent: var(--accent-4); --accent-soft: var(--accent-4-soft); }
+.hero[data-accent="5"] { --accent: var(--accent-5); --accent-soft: var(--accent-5-soft); }
+.hero[data-accent="6"] { --accent: var(--accent-6); --accent-soft: var(--accent-6-soft); }
+.hero[data-state="soon"] { --wash: var(--soon-soft); }
+.hero[data-state="paused"] { --wash: var(--alarm-soft); }
 
 .status {
   display: flex;
@@ -248,8 +302,27 @@ a { color: inherit; }
   color: var(--muted);
 }
 
+/* Лекції: filled chip. Практичні / Лабораторні: outlined. */
+.class-kicker { margin-top: 20px; }
+.type-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 4px 12px 4px 9px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--accent, var(--text));
+  box-shadow: inset 0 0 0 1.5px currentColor;
+}
+.type-chip--filled {
+  background: var(--accent-soft, var(--neutral-soft));
+  box-shadow: none;
+}
+
 .class-title {
-  margin-top: 20px;
+  margin-top: 10px;
   font-size: 26px;
   font-weight: 700;
   line-height: 1.2;
@@ -303,6 +376,12 @@ a { color: inherit; }
 }
 .btn-join:hover { opacity: 0.9; }
 .btn-join:active { transform: scale(0.98); }
+/* During an alert: still there, but shelter comes first. */
+.btn-join--secondary {
+  background: var(--neutral-soft);
+  color: var(--text);
+  box-shadow: inset 0 0 0 1px var(--input-border);
+}
 
 .no-link {
   margin-top: 20px;
@@ -374,14 +453,12 @@ a { color: inherit; }
 }
 
 /* ---------- Tomorrow ---------- */
-.tomorrow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
+.tomorrow-line { font-weight: 500; line-height: 1.35; }
+.tomorrow-sub {
+  margin-top: 2px;
+  font-size: 14px;
+  color: var(--muted);
 }
-.tomorrow-title { font-weight: 500; }
-.tomorrow-summary { color: var(--muted); text-align: right; }
 
 /* ---------- Footer ---------- */
 .foot {
@@ -489,6 +566,7 @@ a { color: inherit; }
 }
 .card-title + .field,
 .section-hint + .field { border-top: 0; padding-top: 0; }
+.field:first-child { border-top: 0; padding-top: 0; }
 .field:last-child { padding-bottom: 0; }
 
 .field-label {
@@ -502,7 +580,8 @@ a { color: inherit; }
   color: var(--muted);
 }
 
-.field input {
+.field input,
+.welcome-form input {
   display: block;
   width: 100%;
   margin-top: 10px;
@@ -515,8 +594,10 @@ a { color: inherit; }
   font: inherit;
   font-size: 16px; /* 16px+ stops iOS from zooming in on focus */
 }
-.field input::placeholder { color: var(--muted); opacity: 0.7; }
-.field input:focus-visible { outline: 3px solid var(--text); outline-offset: 1px; }
+.field input::placeholder,
+.welcome-form input::placeholder { color: var(--muted); opacity: 0.7; }
+.field input:focus-visible,
+.welcome-form input:focus-visible { outline: 3px solid var(--text); outline-offset: 1px; }
 .field input[aria-invalid="true"] { border-color: var(--alarm); border-width: 2px; }
 
 .field-msg {
@@ -553,6 +634,7 @@ a { color: inherit; }
 .btn:active { transform: scale(0.98); }
 .btn--primary { background: var(--btn-bg); color: var(--btn-text); }
 .btn--secondary { background: var(--neutral-soft); color: var(--text); box-shadow: inset 0 0 0 1px var(--input-border); }
+.btn--text { background: transparent; color: var(--muted); min-height: 48px; }
 
 .settings-status {
   text-align: center;
@@ -562,6 +644,42 @@ a { color: inherit; }
 }
 .settings-status:empty { display: none; }
 .settings-status.is-error { color: var(--alarm); }
+
+/* ---------- Welcome (first launch) ---------- */
+#welcome-view { min-height: calc(100dvh - 48px); justify-content: center; }
+.welcome {
+  padding: 28px 24px 20px;
+  animation: rise 0.4s ease both;
+}
+.welcome-hello {
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+.welcome-hello:focus { outline: none; }
+.welcome-intro {
+  margin-top: 10px;
+  font-size: 17px;
+  color: var(--muted);
+}
+.welcome-form { margin-top: 28px; }
+.welcome-question {
+  display: block;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+.welcome-form .field-context { margin-top: 6px; }
+.welcome-actions {
+  display: grid;
+  gap: 4px;
+  margin-top: 20px;
+}
+@keyframes rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
 
 /* ---------- Motion ---------- */
 @media (prefers-reduced-motion: reduce) {

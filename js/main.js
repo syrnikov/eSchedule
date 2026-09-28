@@ -1,6 +1,6 @@
 // Boot + render loop: the clock ticks every second, everything else re-renders every 15 s.
 
-import { STRINGS } from "./strings.js";
+import { STRINGS, pick } from "./strings.js";
 import {
   kyivParts, kyivLocalToDate, addDays, weekdayOf, toMinutes,
   formatClock, formatLongDate, formatDayMonth, formatIsoDayMonth,
@@ -12,6 +12,9 @@ import { renderSettings } from "./settings.js";
 import { computeStatus } from "./status.js";
 import { startAlarmWatch } from "./alarm.js";
 import { el, icon } from "./dom.js";
+import { greeting, daySummary, tomorrowText, accentIndex, alertMinutes } from "./voice.js";
+import { loadProfile } from "./profile.js";
+import { renderWelcome } from "./welcome.js";
 
 const RENDER_EVERY_MS = 15_000;
 const RELOAD_SCHEDULE_EVERY_MS = 30 * 60_000;
@@ -57,16 +60,24 @@ function nextClassText(today, nextClass) {
 
 // Label + detail line for the hero, from the computed status.
 function describe(status) {
-  const { state, cls } = status;
+  const { state, cls, today } = status;
   switch (state) {
     case "paused":
       return { label: STRINGS.status.paused, detail: STRINGS.detail.paused };
-    case "resumed":
-      return { label: STRINGS.status.resumed, detail: STRINGS.detail.resumed };
+    case "resumed": {
+      const lasted = alertMinutes(status.alertSince, status.clearedAt);
+      return {
+        label: STRINGS.status.resumed,
+        detail: lasted ? STRINGS.detail.alertLasted(formatDuration(lasted)) : STRINGS.detail.resumed,
+      };
+    }
     case "live":
-      return { label: STRINGS.status.live, detail: STRINGS.detail.left(formatDuration(status.minutesLeft)) };
+      return {
+        label: STRINGS.status.live,
+        detail: pick(STRINGS.detail.left(formatDuration(status.minutesLeft)), today, `live:${cls.start}`),
+      };
     case "soon":
-      return { label: STRINGS.status.soon(status.minutesUntil), detail: "" };
+      return { label: STRINGS.status.soon(status.minutesUntil), detail: pick(STRINGS.detail.soon, today, `soon:${cls.start}`) };
     case "upcoming":
       return { label: STRINGS.status.upcoming(cls.start), detail: STRINGS.detail.startsIn(formatDuration(status.minutesUntil)) };
     case "break":
@@ -97,9 +108,12 @@ function renderHero(status) {
   ];
 
   if (cls) {
+    const filled = STRINGS.data.filledTypes.includes(cls.type);
     parts.push(
+      el("div", { class: "class-kicker" },
+        el("span", { class: `type-chip${filled ? " type-chip--filled" : ""}` }, icon(typeIcon(cls.type), "20"), cls.type)),
       el("h2", { class: "class-title" }, cls.discipline),
-      el("p", { class: "class-meta" }, joinDot(cls.type, cls.teacher, showRoom(cls.room))),
+      el("p", { class: "class-meta" }, joinDot(cls.teacher, showRoom(cls.room))),
       el("div", { class: "timing" }, el("span", {}, formatRange(cls.start, cls.end))),
     );
     if (status.state === "live" || status.state === "resumed") {
@@ -109,8 +123,10 @@ function renderHero(status) {
     }
 
     const url = findLink(loadLinks(), cls);
+    // During an alert the screen says "pause": shelter first, so joining is secondary.
+    const joinClass = status.state === "paused" ? "btn-join btn-join--secondary" : "btn-join";
     parts.push(url
-      ? el("a", { class: "btn-join", href: url, target: "_blank", rel: "noopener noreferrer" },
+      ? el("a", { class: joinClass, href: url, target: "_blank", rel: "noopener noreferrer" },
         icon("videocam"), STRINGS.join)
       : el("div", { class: "no-link" },
         icon("link_off", "20"), el("span", {}, STRINGS.noLink),
@@ -127,6 +143,8 @@ function renderHero(status) {
   }
 
   hero.dataset.state = status.state;
+  if (cls) hero.dataset.accent = accentIndex(cls.discipline);
+  else delete hero.dataset.accent;
   hero.replaceChildren(...parts);
 }
 
@@ -148,7 +166,8 @@ function renderToday(status) {
       live ? el("span", { class: "badge" }, STRINGS.nowBadge) : el("span"));
   });
 
-  card.replaceChildren(el("h3", { class: "card-title" }, STRINGS.today), el("ul", { class: "rows" }, rows));
+  const title = STRINGS.today(pluralize(todays.length, STRINGS.units.classes));
+  card.replaceChildren(el("h3", { class: "card-title" }, title), el("ul", { class: "rows" }, rows));
 }
 
 function renderTomorrow(status) {
@@ -158,12 +177,10 @@ function renderTomorrow(status) {
   if (card.hidden) return;
 
   const list = schedule.classes.filter((c) => c.date === tomorrow);
-  const summary = list.length
-    ? STRINGS.tomorrowSummary(list[0].start, pluralize(list.length, STRINGS.units.classes))
-    : STRINGS.tomorrowNone;
+  const { line, sub } = tomorrowText(list, status.today);
   card.replaceChildren(el("div", { class: "tomorrow" },
-    el("span", { class: "tomorrow-title" }, STRINGS.tomorrow),
-    el("span", { class: "tomorrow-summary" }, summary)));
+    el("p", { class: "tomorrow-line" }, line),
+    sub && el("p", { class: "tomorrow-sub" }, sub)));
 }
 
 function renderFooter() {
@@ -176,21 +193,36 @@ function renderFooter() {
   foot.replaceChildren(...parts);
 }
 
+// Small date + time line above the greeting. The time is still handy, just not the hero.
 function renderClock() {
   const t = now();
-  const clock = formatClock(t);
-  const clockEl = document.getElementById("clock");
-  if (clockEl.textContent !== clock) clockEl.textContent = clock;
-  const date = formatLongDate(t);
+  const text = joinDot(formatLongDate(t), formatClock(t));
   const dateEl = document.getElementById("date");
-  if (dateEl.textContent !== date) dateEl.textContent = date;
+  if (dateEl.textContent !== text) dateEl.textContent = text;
+}
+
+const setText = (id, text) => {
+  const node = document.getElementById(id);
+  if (node.textContent !== text) node.textContent = text;
+  node.hidden = !text;
+};
+
+function renderHeader(status) {
+  const nowMin = kyivParts(now()).minutes;
+  const todays = schedule?.classes.filter((c) => c.date === status.today) ?? [];
+  setText("greeting", greeting(nowMin, loadProfile().name, status.today));
+  setText("day-summary", daySummary(status, todays, nowMin));
 }
 
 function currentAlarm() {
   const t = now();
   if (debugAlarm === "alert") return { state: "alert", seenSince: t, clearedAt: null };
   if (debugAlarm === "unknown") return { state: "unknown", seenSince: null, clearedAt: null };
-  if (debugAlarm === "resumed") return { state: "clear", seenSince: null, clearedAt: new Date(debugStart ?? bootedAt) };
+  if (debugAlarm === "resumed") {
+    // A 23-minute alert that ended when the page opened.
+    const clearedAt = new Date(debugStart ?? bootedAt);
+    return { state: "clear", seenSince: null, clearedAt, lastAlertSince: new Date(clearedAt - 23 * 60_000) };
+  }
   if (debugAlarm === "clear") return { state: "clear", seenSince: null, clearedAt: null };
   return getAlarm();
 }
@@ -200,6 +232,7 @@ function render() {
   const alarm = currentAlarm();
   // alarmPending: first poll hasn't answered yet, so don't flash "unknown".
   const status = { ...computeStatus(now(), schedule, alarm), alarmPending: Boolean(alarm.pending) };
+  renderHeader(status);
   renderHero(status);
   announce(status);
   renderToday(status);
@@ -221,8 +254,10 @@ async function refreshSchedule() {
   if (settingsOpen() && settingsEmpty && schedule) route();
 }
 
-// --- Routing: "#settings" or "#settings:<link key>" opens settings, anything else the main screen ---
+// --- Routing: "#settings" or "#settings:<link key>" opens settings, anything else the main screen.
+// On first launch the main screen waits behind the welcome card. ---
 let settingsEmpty = false;
+let welcomeDone = false; // for this session, in case storage is blocked
 const settingsOpen = () => location.hash.startsWith("#settings");
 
 // Tab title and screen reader announcement: only when the status actually changes,
@@ -240,9 +275,17 @@ function announce(status) {
 
 function route() {
   const open = settingsOpen();
-  document.getElementById("main-view").hidden = open;
+  const welcome = !open && !welcomeDone && !loadProfile().onboarded;
+  document.getElementById("main-view").hidden = open || welcome;
   document.getElementById("settings-view").hidden = !open;
-  if (open) {
+  document.getElementById("welcome-view").hidden = !welcome;
+  if (welcome) {
+    document.title = STRINGS.appTitle;
+    renderWelcome(document.getElementById("welcome-view"), () => {
+      welcomeDone = true;
+      route();
+    });
+  } else if (open) {
     const [, rawKey] = location.hash.split(/:(.*)/);
     const focusKey = rawKey ? decodeURIComponent(rawKey) : null;
     settingsEmpty = !schedule;

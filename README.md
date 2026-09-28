@@ -37,6 +37,8 @@ GitHub Pages (static site) <─────────────────�
 | `js/status.js` | `computeStatus(now, schedule, alarm)`, a pure function; the core logic |
 | `js/alarm.js` | Polls the Worker and tracks alarm state |
 | `js/settings.js`, `js/links.js` | Settings screen; link storage, import/export |
+| `js/voice.js` | Greeting, day summary, tomorrow’s tone, subject accent colour (pure) |
+| `js/profile.js`, `js/welcome.js` | The name to greet you by (device only); first-launch card |
 | `js/format.js` | Kyiv time and Ukrainian formatting |
 | `js/strings.js` | **All UI text** |
 | `js/config.js` | Worker URL and alarm region |
@@ -83,7 +85,8 @@ answers the GitHub Pages origin.
 
 - **New academic year / different group.** The group ID changes. Follow the ID lookup in
   [RECON.md](RECON.md) and update `GROUP_ID`, `GROUP_NAME` and `SUBGROUP` in `scraper/scrape.mjs`.
-- **Wording.** Everything is in `js/strings.js`.
+- **Wording.** Everything is in `js/strings.js`. Arrays are pools of variants; `pick()` chooses one
+  per day, so text varies day to day but never flickers.
 - **Colours.** The tokens at the top of `css/styles.css` (light) and in the dark-mode block.
   `npm test` checks that text contrast stays at WCAG AA.
 - **A new icon.** Add its name to `icon_names` in `index.html`, in alphabetical order, and to the

@@ -1,6 +1,7 @@
 // Air alarm: polls our Cloudflare Worker and tracks the state client-side.
 // Output shape (what computeStatus expects):
-//   { state: "alert" | "clear" | "unknown", seenSince: Date|null, clearedAt: Date|null }
+//   { state: "alert" | "clear" | "unknown", seenSince: Date|null, clearedAt: Date|null,
+//     lastAlertSince: Date|null }  // when the last finished alert started (for "Тривога тривала 23 хв")
 
 import { ALARM_WORKER_URL, ALARM_REGION } from "./config.js";
 
@@ -12,7 +13,9 @@ const TIMEOUT_MS = 15_000;
 const STORAGE_KEY = "pary.alarm.v1";
 const RESTORE_MAX_AGE_MS = 10 * 60_000;
 
-export const INITIAL = { state: "unknown", seenSince: null, clearedAt: null, failures: 0, pending: true };
+export const INITIAL = {
+  state: "unknown", seenSince: null, clearedAt: null, lastAlertSince: null, failures: 0, pending: true,
+};
 
 // Feed JSON -> true (alert) / false (clear). Throws if the region is missing.
 export function parseFeed(data, region = ALARM_REGION) {
@@ -33,11 +36,16 @@ export function nextAlarmState(prev, observation, now) {
   if (observation.alert) {
     // The feed's "changed" time is unreliable, so "since" is when WE first saw it.
     const seenSince = prev.state === "alert" && prev.seenSince ? prev.seenSince : now;
-    return { state: "alert", seenSince, clearedAt: prev.clearedAt, failures: 0, pending: false };
+    return {
+      state: "alert", seenSince, clearedAt: prev.clearedAt, lastAlertSince: prev.lastAlertSince ?? null,
+      failures: 0, pending: false,
+    };
   }
   // Clear. We only know when it ended if we saw it active before.
-  const clearedAt = prev.state === "alert" ? now : prev.clearedAt;
-  return { state: "clear", seenSince: null, clearedAt, failures: 0, pending: false };
+  const justEnded = prev.state === "alert";
+  const clearedAt = justEnded ? now : prev.clearedAt;
+  const lastAlertSince = justEnded ? prev.seenSince : prev.lastAlertSince ?? null;
+  return { state: "clear", seenSince: null, clearedAt, lastAlertSince, failures: 0, pending: false };
 }
 
 // --- Browser side (not unit-tested: network, timers, storage) ---
@@ -50,6 +58,7 @@ function restore() {
       ...INITIAL,
       seenSince: saved.seenSince ? new Date(saved.seenSince) : null,
       clearedAt: saved.clearedAt ? new Date(saved.clearedAt) : null,
+      lastAlertSince: saved.lastAlertSince ? new Date(saved.lastAlertSince) : null,
       // Keep "unknown" until the first poll confirms; only the timestamps carry over.
       state: saved.state === "alert" ? "alert" : "unknown",
     };
@@ -61,7 +70,8 @@ function restore() {
 function save(s) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      state: s.state, seenSince: s.seenSince, clearedAt: s.clearedAt, savedAt: Date.now(),
+      state: s.state, seenSince: s.seenSince, clearedAt: s.clearedAt, lastAlertSince: s.lastAlertSince,
+      savedAt: Date.now(),
     }));
   } catch { /* storage blocked: fine, we just lose the timestamps on reload */ }
 }

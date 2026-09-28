@@ -1,4 +1,4 @@
-// Settings screen, built from groups (Посилання · Резервна копія) plus a small credits footer.
+// Settings screen, built from groups (Про тебе · Посилання · Резервна копія) plus a small credits footer.
 // To add a setting later, add another group(...) in renderSettings.
 // Rendered once when opened (not on the 15 s loop, so typing is never interrupted).
 
@@ -8,6 +8,7 @@ import { kyivParts, pluralize } from "./format.js";
 import {
   loadLinks, saveLinks, setLink, isValidUrl, collectPairs, collectTeachers, parseImport, exportJson,
 } from "./links.js";
+import { loadProfile, saveProfile, cleanName, MAX_NAME_LENGTH } from "./profile.js";
 
 const S = STRINGS.settingsView;
 const MAX_IMPORT_BYTES = 100_000;
@@ -60,6 +61,30 @@ export function renderSettings(container, schedule, { focusKey = null, message =
       input,
       msg);
   }
+
+  // --- Group: about you (the name for the greeting) ---
+  const nameMsg = el("p", { class: "field-msg", id: "profile-name-msg", "aria-live": "polite" });
+  const nameInput = el("input", {
+    id: "profile-name", type: "text", autocomplete: "given-name", autocapitalize: "words",
+    maxlength: String(MAX_NAME_LENGTH), placeholder: S.namePlaceholder, "aria-describedby": "profile-name-msg",
+  });
+  nameInput.value = loadProfile().name;
+  nameInput.addEventListener("change", () => {
+    const name = cleanName(nameInput.value);
+    nameInput.value = name;
+    if (name === loadProfile().name) return;
+    const ok = saveProfile({ name });
+    nameMsg.textContent = ok ? S.saved : S.storageBlocked;
+    nameMsg.className = `field-msg is-${ok ? "saved" : "error"}`;
+  });
+
+  const profileGroup = group(S.profileGroup,
+    el("div", { class: "card" },
+      el("div", { class: "field" },
+        el("label", { for: "profile-name", class: "field-label" }, S.nameLabel),
+        el("p", { class: "field-context" }, S.nameHint),
+        nameInput,
+        nameMsg)));
 
   // --- Group: links ---
   const teacherFields = collectTeachers(classes).map((t) =>
@@ -138,6 +163,7 @@ export function renderSettings(container, schedule, { focusKey = null, message =
     el("div", { class: "settings-top" },
       el("a", { class: "icon-btn", href: "#", "aria-label": S.back }, icon("arrow_back")),
       el("h1", { class: "settings-title", tabindex: "-1" }, S.title)),
+    profileGroup,
     linksGroup,
     backupGroup,
     about,

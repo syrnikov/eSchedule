@@ -6,6 +6,7 @@
 //   state: "alert" | "clear" | "unknown",
 //   seenSince: Date | null,  // when we first saw the current alert (Phase 5)
 //   clearedAt: Date | null,  // when the last alert ended, if we saw it end
+//   lastAlertSince: Date | null, // when that alert started (optional)
 // }
 //
 // States: live, soon, upcoming, break, done, weekend, nodata,
@@ -50,7 +51,7 @@ export function computeStatus(now, schedule, alarm = CLEAR) {
     };
     if (alarmState === "alert") return { ...live, state: "paused" };
     if (alarmState === "clear" && endedDuringClass(alarm.clearedAt, now, today, start)) {
-      return { ...live, state: "resumed" };
+      return { ...live, state: "resumed", alertSince: alarm.lastAlertSince ?? null, clearedAt: alarm.clearedAt };
     }
     return { ...live, state: "live" };
   }
