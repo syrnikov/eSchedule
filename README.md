@@ -8,6 +8,8 @@ One calm screen that answers: **what should I be doing right now, and what's nex
 - Pauses for air alarms in Odesa oblast, and says so when the alarm status is unknown
 - Today's classes, a preview of tomorrow, and when the schedule was last updated
 - Installable on a phone's home screen, light and dark mode, Ukrainian UI
+- Optional push reminders before class (5/10/15 min), and optional pushes when an alert
+  starts or ends mid-class
 
 Live site: https://syrnikov.github.io/eSchedule/
 
@@ -18,7 +20,11 @@ GitHub Actions (every 3 h) ──> vnz.osvita.net schedule API ──> data/sche
                                                                       │
 GitHub Pages (static site) <──────────────────────────────────────────┘
         ├── every 60 s ──> Cloudflare Worker ──> ubilling.net.ua/aerialalerts (air alarms)
+        ├── push subscription + group + prefs ──> Worker ──> D1 (no names, no links)
         └── meeting links ──> localStorage on your device only (never committed)
+
+Worker cron (every minute) ──> schedule.json from Pages (cached 30 min in KV)
+                           ──> "Через 5 хв — …" pushes (Web Push, VAPID, Web Crypto only)
 ```
 
 - **No build step, no framework, no browser dependencies.** Plain HTML, CSS and ES modules.
@@ -27,6 +33,8 @@ GitHub Pages (static site) <─────────────────�
 - The alarm feed has no CORS headers, so a tiny Cloudflare Worker proxies it for this site only.
 - Links often contain passcodes, so they live only in your browser. Use export/import in
   settings to back them up or move them to another device.
+- Push messages carry only subject, type, teacher and start time. Tapping one opens the app,
+  where the link is. `sw.js` handles pushes only: it has no fetch handler and caches nothing.
 
 ## Project layout
 
@@ -43,13 +51,14 @@ GitHub Pages (static site) <─────────────────�
 | `js/strings.js` | **All UI text** |
 | `js/config.js` | Worker URL and alarm region |
 | `scraper/` | `scrape.mjs` (fetch + write), `parse.mjs` (pure), saved API responses in `fixtures/` |
-| `worker/` | Cloudflare Worker and `wrangler.toml` |
+| `worker/` | Cloudflare Worker and `wrangler.toml`: alarm proxy (`worker.js`), push API + cron (`push.js`), Web Push crypto (`webpush.js`), D1 schema (`migrations/`) |
+| `js/push.js`, `sw.js` | Browser side of push: support detection, subscribe, service worker |
 | `.github/workflows/scrape.yml` | Scheduled scraper |
 | `tests/` | `node:test` tests |
 
 ## Running locally
 
-Needs Node 20+ (the site itself needs nothing).
+Needs Node 22.13+ for the tests (they use `node:sqlite`); the site itself needs nothing.
 
 ```bash
 npm test                         # all tests
@@ -80,6 +89,18 @@ answers the GitHub Pages origin.
    ```
    Put the printed URL in `js/config.js` (`ALARM_WORKER_URL`). If the site's address changes,
    update `ALLOWED_ORIGINS` in `worker/wrangler.toml` and deploy again.
+5. **Push reminders** (from `worker/`, once):
+   ```bash
+   npx wrangler d1 create pary-push              # put database_id in wrangler.toml
+   npx wrangler kv namespace create CACHE        # put id in wrangler.toml
+   npx wrangler d1 migrations apply pary-push --remote
+   node scripts/vapid-keys.mjs                   # public key -> VAPID_PUBLIC_KEY in wrangler.toml
+   npx wrangler secret put VAPID_PRIVATE_KEY     # paste the private key
+   npx wrangler deploy
+   ```
+   Groups that may subscribe are listed under `[vars.GROUPS]` in `wrangler.toml`.
+   The free plan allows 50 outgoing requests per run, so the cron sends at most 40 pushes a
+   minute; the rest go out the next minute.
 
 ## Common changes
 

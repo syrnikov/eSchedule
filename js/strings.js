@@ -100,6 +100,26 @@ export const STRINGS = {
     none: ["Завтра пар немає — можна видихнути 😌", "Завтра вільний день 🙌"],
   },
 
+  // Home card offering reminders (shown once, in context).
+  pushCard: {
+    title: "Нагадувати про пари? 🔔",
+    body: "Напишу за 5 хв до початку, щоб нічого не пропустити.",
+    iosBody: "На iPhone для цього треба спершу додати «Пари» на головний екран.",
+    enable: "Увімкнути",
+    how: "Як це зробити",
+    later: "Не зараз",
+  },
+
+  // Push notification texts. Sent by the Worker, so: no names, no links.
+  push: {
+    reminderTitle: (duration, discipline) => `Через ${duration} — ${discipline} 🎓`,
+    reminderBody: (type, teacher, start) => [type, teacher, `початок о ${start}`].filter(Boolean).join(" · "),
+    alertTitle: (region) => `Повітряна тривога · ${region}`,
+    alertBody: "Пара на паузі. Бережи себе 🙏",
+    clearTitle: "Відбій! Повертаємось на пару 🙌",
+    clearBody: (duration) => (duration ? `Тривога тривала ${duration}` : "Пара продовжується"),
+  },
+
   updatedAt: (date, time) => `Розклад оновлено ${date} о ${time}`,
   stale: "Розклад давно не оновлювався",
   loadError: "Не вдалося завантажити розклад",
@@ -124,6 +144,28 @@ export const STRINGS = {
     nameLabel: "Як до тебе звертатися",
     nameHint: "Для привітання на головному екрані. Можна залишити порожнім.",
     namePlaceholder: "Наприклад, Артеме",
+
+    // Group: reminders (push)
+    pushGroup: "Нагадування",
+    remindersLabel: "Нагадувати про пари",
+    remindersHint: "Сповіщення перед початком пари. На сервер іде лише назва групи — ім’я й посилання лишаються тут.",
+    leadLabel: "За скільки хвилин",
+    leadOption: (mins) => `${mins} хв`,
+    alertsLabel: "Тривога під час пари",
+    alertsHint: (region) => `Коли тривога починається чи закінчується посеред пари · ${region}`,
+    iosTitle: "Додай на головний екран, щоб я міг нагадувати про пари",
+    iosSteps: [
+      { icon: "ios_share", text: "Натисни «Поділитися» внизу Safari" },
+      { icon: "add_box", text: "Обери «На початковий екран»" },
+      { icon: "notifications", text: "Відкрий «Пари» з головного екрана й увімкни нагадування тут" },
+    ],
+    pushUnsupported: "Цей браузер не вміє показувати сповіщення 😕",
+    pushDenied: "Сповіщення вимкнені в налаштуваннях браузера. Дозволь їх для цього сайту — і я знову зможу нагадувати.",
+    pushNoSchedule: "Спершу має завантажитися розклад.",
+    pushWorking: "Хвилинку…",
+    pushOn: "Готово! Нагадаю вчасно 🔔",
+    pushOff: "Сповіщення вимкнено",
+    pushError: "Не вдалося зберегти. Спробуй ще раз трохи згодом.",
 
     // Group: links
     linksGroup: "Посилання",

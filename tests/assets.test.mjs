@@ -85,6 +85,7 @@ test("every icon used in js/ is in the font subset, which is sorted", async () =
     if (statusIcons) for (const m of statusIcons[1].matchAll(/"([a-z_]+)"/g)) used.add(m[1]);
   }
   used.add("settings"); // written directly in index.html
+  for (const step of STRINGS.settingsView.iosSteps) used.add(step.icon); // icon(step.icon) in settings.js
   for (const name of used) assert.ok(subset.includes(name), `missing from icon_names: ${name}`);
 });
 

@@ -1,4 +1,5 @@
-// Settings screen, built from groups (Про тебе · Посилання · Резервна копія) plus a small credits footer.
+// Settings screen, built from groups (Про тебе · Нагадування · Посилання · Резервна копія)
+// plus a small credits footer.
 // To add a setting later, add another group(...) in renderSettings.
 // Rendered once when opened (not on the 15 s loop, so typing is never interrupted).
 
@@ -9,6 +10,8 @@ import {
   loadLinks, saveLinks, setLink, isValidUrl, collectPairs, collectTeachers, parseImport, exportJson,
 } from "./links.js";
 import { loadProfile, saveProfile, cleanName, MAX_NAME_LENGTH } from "./profile.js";
+import { pushSupport, loadPushPrefs, applyPush, groupKey, wantsPush, LEADS } from "./push.js";
+import { ALARM_REGION } from "./config.js";
 
 const S = STRINGS.settingsView;
 const MAX_IMPORT_BYTES = 100_000;
@@ -16,6 +19,102 @@ const MAX_IMPORT_BYTES = 100_000;
 // A titled group of cards.
 const group = (title, ...cards) =>
   el("section", { class: "settings-group" }, el("h2", { class: "group-title" }, title), cards);
+
+// On/off row: the whole row is the label, so the tap target is the full width.
+function switchRow(id, label, hint, checked) {
+  const input = el("input", { id, type: "checkbox", role: "switch", class: "switch" });
+  input.checked = checked;
+  const row = el("label", { class: "switch-row", for: id },
+    el("span", { class: "switch-text" },
+      el("span", { class: "field-label" }, label),
+      hint && el("span", { class: "field-context" }, hint)),
+    input);
+  return { row, input };
+}
+
+// «Нагадування»: iOS install steps, a "can't" note, or the actual switches.
+function pushCard(schedule) {
+  const support = pushSupport();
+  const card = el("div", { class: "card", "data-key": "push", tabindex: "-1" });
+
+  if (support === "ios-install") {
+    card.classList.add("install-card");
+    card.append(
+      el("p", { class: "install-title" }, S.iosTitle),
+      el("ol", { class: "install-steps" },
+        S.iosSteps.map((step, i) => el("li", {},
+          el("span", { class: "install-num", "aria-hidden": "true" }, String(i + 1)),
+          el("span", { class: "install-icon" }, icon(step.icon)),
+          el("span", {}, step.text)))));
+    return card;
+  }
+  if (support === "unsupported" || support === "denied") {
+    card.append(el("p", { class: "field-context" }, support === "denied" ? S.pushDenied : S.pushUnsupported));
+    return card;
+  }
+
+  const prefs = loadPushPrefs();
+  const status = el("p", { class: "settings-status", "aria-live": "polite" });
+  const reminders = switchRow("push-reminders", S.remindersLabel, S.remindersHint, prefs.reminders);
+  const alerts = switchRow("push-alerts", S.alertsLabel, S.alertsHint(ALARM_REGION), prefs.alerts);
+
+  const leadInputs = LEADS.map((mins) => {
+    const input = el("input", { type: "radio", name: "push-lead", value: String(mins) });
+    input.checked = prefs.lead === mins;
+    return input;
+  });
+  const lead = el("fieldset", { class: "segmented" },
+    el("legend", { class: "field-label" }, S.leadLabel),
+    el("div", { class: "segmented-options" },
+      leadInputs.map((input, i) => el("label", { class: "segment" }, input, el("span", {}, S.leadOption(LEADS[i]))))));
+  lead.hidden = !prefs.reminders;
+
+  const all = [reminders.input, alerts.input, ...leadInputs];
+  const read = () => ({
+    reminders: reminders.input.checked,
+    alerts: alerts.input.checked,
+    lead: Number(leadInputs.find((i) => i.checked)?.value ?? 5),
+  });
+  const show = (prefsNow) => {
+    reminders.input.checked = prefsNow.reminders;
+    alerts.input.checked = prefsNow.alerts;
+    for (const i of leadInputs) i.checked = Number(i.value) === prefsNow.lead;
+    lead.hidden = !prefsNow.reminders;
+  };
+  const say = (text, error = false) => {
+    status.textContent = text;
+    status.className = `settings-status${error ? " is-error" : ""}`;
+  };
+
+  async function onChange() {
+    const before = loadPushPrefs();
+    const next = read();
+    lead.hidden = !next.reminders;
+    const group = groupKey(schedule);
+    if (wantsPush(next) && !group) { show(before); return say(S.pushNoSchedule, true); }
+
+    say(S.pushWorking);
+    for (const i of all) i.disabled = true;
+    try {
+      const result = await applyPush(next, group);
+      if (result === "denied") return card.replaceWith(pushCard(schedule)); // shows the "blocked" note
+      say(result === "on" ? S.pushOn : S.pushOff);
+    } catch (err) {
+      console.warn(err);
+      show(before);
+      say(S.pushError, true);
+    } finally {
+      for (const i of all) i.disabled = false;
+    }
+  }
+  for (const i of all) i.addEventListener("change", onChange);
+
+  card.append(
+    el("div", { class: "field" }, reminders.row, lead),
+    el("div", { class: "field" }, alerts.row),
+    status);
+  return card;
+}
 
 // focusKey: link key to focus (from the hero's «Додати»), or null.
 export function renderSettings(container, schedule, { focusKey = null, message = "" } = {}) {
@@ -85,6 +184,8 @@ export function renderSettings(container, schedule, { focusKey = null, message =
         el("p", { class: "field-context" }, S.nameHint),
         nameInput,
         nameMsg)));
+
+  const pushGroup = group(S.pushGroup, pushCard(schedule));
 
   // --- Group: links ---
   const teacherFields = collectTeachers(classes).map((t) =>
@@ -164,13 +265,14 @@ export function renderSettings(container, schedule, { focusKey = null, message =
       el("a", { class: "icon-btn", href: "#", "aria-label": S.back }, icon("arrow_back")),
       el("h1", { class: "settings-title", tabindex: "-1" }, S.title)),
     profileGroup,
+    pushGroup,
     linksGroup,
     backupGroup,
     about,
   );
 
   // Focus the requested field (opening its section if collapsed), or the heading.
-  const target = focusKey && [...container.querySelectorAll("input[data-key]")].find((i) => i.dataset.key === focusKey);
+  const target = focusKey && [...container.querySelectorAll("[data-key]")].find((i) => i.dataset.key === focusKey);
   if (target) {
     const details = target.closest("details");
     if (details) details.open = true;

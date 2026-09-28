@@ -3,6 +3,33 @@ name = "pary-alarm"
 main = "worker.js"
 compatibility_date = "2026-09-01"
 
+# Class reminders and alert pushes (push.js). Cron is UTC; the code works in Kyiv time.
+[triggers]
+crons = ["* * * * *"]
+
 [vars]
 # Only this origin may read the responses (comma-separated if you ever need more).
 ALLOWED_ORIGINS = "https://syrnikov.github.io"
+# VAPID: the public key is safe to publish. The private key is a secret:
+#   npx wrangler secret put VAPID_PRIVATE_KEY
+# Generate a pair with: node scripts/vapid-keys.mjs
+VAPID_PUBLIC_KEY = ""
+VAPID_SUBJECT = "https://syrnikov.github.io/eSchedule/"
+
+# Groups that can subscribe. Key = "group|subgroup" exactly as in data/schedule.json.
+[vars.GROUPS."208-бак-3к денне 26-27|1б"]
+schedule = "https://syrnikov.github.io/eSchedule/data/schedule.json"
+region = "Одеська область"
+
+# Push subscriptions. Create with: npx wrangler d1 create pary-push
+# Then apply the schema: npx wrangler d1 migrations apply pary-push --remote
+[[d1_databases]]
+binding = "DB"
+database_name = "pary-push"
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "migrations"
+
+# Schedule cache + last alarm state. Create with: npx wrangler kv namespace create CACHE
+[[kv_namespaces]]
+binding = "CACHE"
+id = "00000000000000000000000000000000"

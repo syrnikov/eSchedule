@@ -1,6 +1,12 @@
-// Cloudflare Worker: proxies the air alarm feed for the Пари dashboard.
-// The feed sends no CORS headers, so the browser can't read it directly.
-// This adds CORS (for our GitHub Pages origin only) and caches for 60 s.
+// Cloudflare Worker for the Пари dashboard.
+//   GET  /                  proxies the air alarm feed (it sends no CORS headers, so the
+//                           browser can't read it directly); CORS for our origin only, cached 60 s
+//   GET  /push/key          VAPID public key
+//   POST /push/subscribe    save a push subscription + preferences (see push.js)
+//   POST /push/unsubscribe  forget one
+//   cron, every minute      class reminders and alert pushes (see push.js)
+
+import { handlePushApi, runCron } from "./push.js";
 
 const FEED_URL = "https://ubilling.net.ua/aerialalerts/";
 const CACHE_SECONDS = 60;
@@ -53,9 +59,26 @@ export function createHandler({ fetchImpl = fetch, now = () => Date.now() } = {}
     if (request.method === "OPTIONS") {
       return new Response(null, {
         status: 204,
-        headers: { ...cors, "Access-Control-Allow-Methods": "GET", "Access-Control-Max-Age": "86400" },
+        headers: {
+          ...cors,
+          "Access-Control-Allow-Methods": "GET, POST",
+          "Access-Control-Allow-Headers": "Content-Type",
+          "Access-Control-Max-Age": "86400",
+        },
       });
     }
+
+    const path = new URL(request.url).pathname;
+    if (path.startsWith("/push/")) {
+      const originAllowed = Boolean(origin && allowed.includes(origin));
+      try {
+        return await handlePushApi(request, env, path, { originAllowed, reply: (data, status) => json(data, status, cors) });
+      } catch (err) {
+        console.error("push api", err);
+        return json({ error: "server_error" }, 500, cors);
+      }
+    }
+
     if (request.method !== "GET") {
       return json({ error: "method_not_allowed" }, 405, cors);
     }
@@ -79,4 +102,9 @@ function json(data, status, headers) {
 }
 
 const handle = createHandler();
-export default { fetch: handle };
+export default {
+  fetch: handle,
+  scheduled(event, env, ctx) {
+    ctx.waitUntil(runCron(env, new Date(event.scheduledTime)));
+  },
+};

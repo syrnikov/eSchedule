@@ -76,7 +76,8 @@ test("OPTIONS preflight and non-GET methods", async () => {
   const { handle } = setup();
   const pre = await handle(new Request("https://x.dev/", { method: "OPTIONS", headers: { Origin: ORIGIN } }), ENV);
   assert.equal(pre.status, 204);
-  assert.equal(pre.headers.get("Access-Control-Allow-Methods"), "GET");
+  assert.equal(pre.headers.get("Access-Control-Allow-Methods"), "GET, POST");
+  assert.equal(pre.headers.get("Access-Control-Allow-Headers"), "Content-Type");
   const post = await handle(new Request("https://x.dev/", { method: "POST", headers: { Origin: ORIGIN } }), ENV);
   assert.equal(post.status, 405);
 });

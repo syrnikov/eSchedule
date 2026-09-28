@@ -15,6 +15,10 @@ import { el, icon } from "./dom.js";
 import { greeting, daySummary, tomorrowText, accentIndex, alertMinutes } from "./voice.js";
 import { loadProfile } from "./profile.js";
 import { renderWelcome } from "./welcome.js";
+import {
+  pushSupport, loadPushPrefs, applyPush, groupKey, wantsPush, pushCardSnoozed, snoozePushCard,
+  registerServiceWorker, resyncPush,
+} from "./push.js";
 
 const RENDER_EVERY_MS = 15_000;
 const RELOAD_SCHEDULE_EVERY_MS = 30 * 60_000;
@@ -183,6 +187,55 @@ function renderTomorrow(status) {
     sub && el("p", { class: "tomorrow-sub" }, sub)));
 }
 
+// "Нагадувати про пари?": offered once, in context, on the home screen. The permission
+// prompt only appears after the student taps «Увімкнути» here (or the switch in settings).
+// Hidden during an alert: shelter first.
+let pushCardBusy = false;
+function renderPushCard(status) {
+  const card = document.getElementById("push-card");
+  if (pushCardBusy) return;
+  const support = schedule ? pushSupport() : "unsupported";
+  const show = (support === "ok" || support === "ios-install") &&
+    !wantsPush(loadPushPrefs()) && !pushCardSnoozed() && status.state !== "paused";
+  card.hidden = !show;
+  if (!show || card.dataset.support === support) return; // already built
+  card.dataset.support = support;
+
+  const P = STRINGS.pushCard;
+  const later = el("button", { type: "button", class: "btn btn--text" }, P.later);
+  later.addEventListener("click", () => { snoozePushCard(); card.hidden = true; });
+
+  let action;
+  if (support === "ios-install") {
+    action = el("a", { class: "btn btn--primary", href: "#settings:push" }, P.how);
+  } else {
+    action = el("button", { type: "button", class: "btn btn--primary" }, icon("notifications"), P.enable);
+    action.addEventListener("click", async () => {
+      pushCardBusy = true;
+      action.disabled = true;
+      try {
+        const result = await applyPush({ reminders: true, lead: 5, alerts: false }, groupKey(schedule));
+        if (result === "on") {
+          card.replaceChildren(el("p", { class: "push-card-done" }, STRINGS.settingsView.pushOn));
+          setTimeout(() => { card.hidden = true; pushCardBusy = false; delete card.dataset.support; }, 4000);
+          return;
+        }
+        card.hidden = true; // denied: don't ask again here
+      } catch (err) {
+        console.warn(err);
+        card.querySelector(".push-card-body").textContent = STRINGS.settingsView.pushError;
+      }
+      action.disabled = false;
+      pushCardBusy = false;
+    });
+  }
+
+  card.replaceChildren(
+    el("p", { class: "push-card-title" }, P.title),
+    el("p", { class: "push-card-body" }, support === "ios-install" ? P.iosBody : P.body),
+    el("div", { class: "push-card-actions" }, action, later));
+}
+
 function renderFooter() {
   const foot = document.getElementById("footer");
   if (!schedule) return foot.replaceChildren();
@@ -236,6 +289,7 @@ function render() {
   renderHero(status);
   announce(status);
   renderToday(status);
+  renderPushCard(status);
   renderTomorrow(status);
   renderFooter();
   lastMinute = kyivParts(now()).minutes;
@@ -245,6 +299,7 @@ async function refreshSchedule() {
   try {
     schedule = await loadSchedule();
     loadFailed = false;
+    resyncPush(groupKey(schedule));
   } catch (err) {
     console.error(err);
     loadFailed = !schedule; // keep showing the last good copy if we have one
@@ -308,6 +363,7 @@ function boot() {
   document.getElementById("app-heading").textContent = STRINGS.appTitle;
   document.getElementById("settings-btn").setAttribute("aria-label", STRINGS.settings);
   watchIconFont();
+  registerServiceWorker();
   if (!debugAlarm) getAlarm = startAlarmWatch(() => render());
 
   renderClock();
