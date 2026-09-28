@@ -17,6 +17,7 @@ import { loadProfile } from "./profile.js";
 import { renderWelcome } from "./welcome.js";
 import { renderShareImport } from "./share-view.js";
 import { SHARE_PREFIX } from "./share.js";
+import { loadJoins, logJoin, makeJoin, weekSummary } from "./stats.js";
 import {
   pushSupport, loadPushPrefs, applyPush, groupKey, wantsPush, pushCardSnoozed, snoozePushCard,
   registerServiceWorker, resyncPush,
@@ -100,6 +101,16 @@ function describe(status) {
   }
 }
 
+// «Приєднатися». Each tap is noted in local stats (never blocks opening the link).
+function joinLink(cls, url, className) {
+  const link = el("a", { class: className, href: url, target: "_blank", rel: "noopener noreferrer" },
+    icon("videocam"), STRINGS.join);
+  link.addEventListener("click", () => {
+    logJoin(makeJoin(cls, now(), currentAlarm().state === "alert")).then(refreshStats);
+  });
+  return link;
+}
+
 function renderHero(status) {
   const hero = document.getElementById("hero");
   const { label, detail } = describe(status);
@@ -132,8 +143,7 @@ function renderHero(status) {
     // During an alert the screen says "pause": shelter first, so joining is secondary.
     const joinClass = status.state === "paused" ? "btn-join btn-join--secondary" : "btn-join";
     parts.push(url
-      ? el("a", { class: joinClass, href: url, target: "_blank", rel: "noopener noreferrer" },
-        icon("videocam"), STRINGS.join)
+      ? joinLink(cls, url, joinClass)
       : el("div", { class: "no-link" },
         icon("link_off", "20"), el("span", {}, STRINGS.noLink),
         // Teacher links are the main way to add links; classes without a teacher use their own.
@@ -187,6 +197,32 @@ function renderTomorrow(status) {
   card.replaceChildren(el("div", { class: "tomorrow" },
     el("p", { class: "tomorrow-line" }, line),
     sub && el("p", { class: "tomorrow-sub" }, sub)));
+}
+
+// "11 пар цього тижня через «Приєднатися» 🎓": only once there's enough to say.
+// Hidden during an alert (shelter first).
+let joins = [];
+async function refreshStats() {
+  joins = await loadJoins();
+  renderStats();
+}
+
+function renderStats(status = lastStatus) {
+  const card = document.getElementById("stats");
+  const week = status && status.state !== "paused" ? weekSummary(joins, status.today) : null;
+  card.hidden = !week;
+  if (!week) return;
+
+  const T = STRINGS.stats;
+  const unit = pluralize(week.classes, STRINGS.units.classes).replace(/^\d+\s/, "");
+  const m = week.typicalMinutes;
+  // Early or on time gets a line; a late typical time gets none (no guilt, ever).
+  const sub = m <= -1 ? T.early(formatDuration(-m)) : m < 1 ? T.onTime : "";
+  card.replaceChildren(
+    el("p", { class: "stats-number" }, String(week.classes)),
+    el("div", {},
+      el("p", { class: "stats-line" }, T.line(unit)),
+      sub && el("p", { class: "stats-sub" }, sub)));
 }
 
 // "Нагадувати про пари?": offered once, in context, on the home screen. The permission
@@ -283,6 +319,7 @@ function currentAlarm() {
 }
 
 let lastMinute = -1;
+let lastStatus = null;
 function render() {
   const alarm = currentAlarm();
   // alarmPending: first poll hasn't answered yet, so don't flash "unknown".
@@ -291,6 +328,8 @@ function render() {
   renderHero(status);
   announce(status);
   renderToday(status);
+  lastStatus = status;
+  renderStats(status);
   renderPushCard(status);
   renderTomorrow(status);
   renderFooter();
@@ -366,6 +405,7 @@ function route() {
     renderSettings(document.getElementById("settings-view"), schedule, { focusKey });
   } else {
     render(); // links may have changed
+    refreshStats(); // …and stats (import or clear in settings)
     window.scrollTo(0, 0);
   }
 }
@@ -398,6 +438,7 @@ function boot() {
   document.getElementById("settings-btn").setAttribute("aria-label", STRINGS.settings);
   watchIconFont();
   registerServiceWorker();
+  refreshStats();
   if (!debugAlarm) getAlarm = startAlarmWatch(() => render());
 
   renderClock();

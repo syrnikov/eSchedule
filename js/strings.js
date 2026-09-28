@@ -119,6 +119,15 @@ export const STRINGS = {
     back: "На головну",
   },
 
+  // Home card: this week's taps on «Приєднатися». Honest (a tap isn't attendance), never guilt:
+  // nothing about missed classes, and a late typical time is simply not mentioned.
+  // Present tense («заходиш») because Ukrainian past tense is gendered and we don't ask.
+  stats: {
+    line: (unit) => `${unit} цього тижня через «Приєднатися» 🎓`,
+    early: (duration) => `Зазвичай заходиш за ${duration} до початку`,
+    onTime: "Зазвичай заходиш хвилина в хвилину",
+  },
+
   // Home card offering reminders (shown once, in context).
   pushCard: {
     title: "Нагадувати про пари? 🔔",
@@ -210,9 +219,18 @@ export const STRINGS = {
     shareCopyManual: "Скопіюй це посилання й надішли групі:",
     shareText: "Посилання на пари для нашої групи",
 
+    // Group: stats
+    statsGroup: "Статистика",
+    statsHint: "Коли тиснеш «Приєднатися», я записую час і пару — тільки на цьому пристрої. Це не відвідуваність, а просто підказка для тебе.",
+    statsCount: (count) => `Збережено: ${count}`,
+    statsEmpty: "Поки порожньо.",
+    statsClear: "Очистити статистику",
+    statsClearConfirm: "Точно? Натисни ще раз",
+    statsCleared: "Статистику очищено",
+
     // Group: backup
     backupGroup: "Резервна копія",
-    backupHint: "Файл JSON з усіма посиланнями. Імпорт додає посилання до вже збережених.",
+    backupHint: "Файл JSON з посиланнями й статистикою. Імпорт додає все до вже збереженого.",
     export: "Експортувати",
     import: "Імпортувати",
     exportFile: (date) => `pary-links-${date}.json`,
@@ -245,6 +263,7 @@ export const STRINGS = {
     hours: { one: "год", few: "год", many: "год" },
     classes: { one: "пара", few: "пари", many: "пар" },
     links: { one: "посилання", few: "посилання", many: "посилань" },
+    records: { one: "запис", few: "записи", many: "записів" },
   },
 };
 

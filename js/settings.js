@@ -7,15 +7,17 @@ import { STRINGS } from "./strings.js";
 import { el, icon } from "./dom.js";
 import { kyivParts, pluralize } from "./format.js";
 import {
-  loadLinks, saveLinks, setLink, isValidUrl, collectPairs, collectTeachers, parseImport, exportJson,
+  loadLinks, saveLinks, setLink, isValidUrl, collectPairs, collectTeachers,
 } from "./links.js";
+import { buildBackup, parseBackup } from "./backup.js";
+import { loadJoins, addJoins, mergeJoins, clearJoins } from "./stats.js";
 import { loadProfile, saveProfile, cleanName, MAX_NAME_LENGTH } from "./profile.js";
 import { pushSupport, loadPushPrefs, applyPush, groupKey, wantsPush, LEADS } from "./push.js";
 import { ALARM_REGION } from "./config.js";
 import { encodeShare, shareUrl } from "./share.js";
 
 const S = STRINGS.settingsView;
-const MAX_IMPORT_BYTES = 100_000;
+const MAX_IMPORT_BYTES = 2_000_000; // links + up to MAX_JOINS stats records
 
 // A titled group of cards.
 const group = (title, ...cards) =>
@@ -94,6 +96,50 @@ function shareCard() {
     manual,
     status);
   return { card, prepare };
+}
+
+// «Статистика»: what's stored, and a way to wipe it. Clearing takes a second tap
+// (no browser confirm() dialogs in this app).
+function statsCard() {
+  const count = el("p", { class: "field-context" });
+  const status = el("p", { class: "settings-status", "aria-live": "polite" });
+  const button = el("button", { type: "button", class: "btn btn--secondary btn--wide" }, S.statsClear);
+  let armed = false;
+  let disarm = null;
+
+  const show = (joins) => {
+    count.textContent = joins.length ? S.statsCount(pluralize(joins.length, STRINGS.units.records)) : S.statsEmpty;
+    button.disabled = joins.length === 0;
+  };
+  loadJoins().then(show);
+
+  button.addEventListener("click", async () => {
+    if (!armed) {
+      armed = true;
+      button.textContent = S.statsClearConfirm;
+      button.classList.add("btn--danger");
+      disarm = setTimeout(() => {
+        armed = false;
+        button.textContent = S.statsClear;
+        button.classList.remove("btn--danger");
+      }, 5000);
+      return;
+    }
+    clearTimeout(disarm);
+    armed = false;
+    button.textContent = S.statsClear;
+    button.classList.remove("btn--danger");
+    const ok = await clearJoins();
+    status.textContent = ok ? S.statsCleared : S.storageBlocked;
+    status.className = `settings-status${ok ? "" : " is-error"}`;
+    show(ok ? [] : await loadJoins());
+  });
+
+  return el("div", { class: "card" },
+    el("p", { class: "field-context section-hint" }, S.statsHint),
+    count,
+    el("div", { class: "stats-actions" }, button),
+    status);
 }
 
 // «Нагадування»: iOS install steps, a "can't" note, or the actual switches.
@@ -286,8 +332,8 @@ export function renderSettings(container, schedule, { focusKey = null, message =
   const fileInput = el("input", { type: "file", accept: "application/json,.json", hidden: true });
 
   const exportBtn = el("button", { type: "button", class: "btn btn--primary" }, icon("download"), S.export);
-  exportBtn.addEventListener("click", () => {
-    const blob = new Blob([exportJson(loadLinks())], { type: "application/json" });
+  exportBtn.addEventListener("click", async () => {
+    const blob = new Blob([buildBackup(loadLinks(), await loadJoins())], { type: "application/json" });
     const a = el("a", { href: URL.createObjectURL(blob), download: S.exportFile(kyivParts(new Date()).date) });
     document.body.append(a);
     a.click();
@@ -302,12 +348,15 @@ export function renderSettings(container, schedule, { focusKey = null, message =
     fileInput.value = "";
     if (!file) return;
     try {
-      if (file.size > MAX_IMPORT_BYTES) throw new Error("links: file too big");
-      const imported = parseImport(await file.text());
-      // Merge: imported links win, links not in the file are kept.
+      if (file.size > MAX_IMPORT_BYTES) throw new Error("backup: file too big");
+      const { links: imported, joins } = parseBackup(await file.text());
+      // Merge: imported links win, links not in the file are kept; stats are added without duplicates.
       if (!saveLinks({ ...loadLinks(), ...imported })) throw new Error("links: storage blocked");
-      const count = pluralize(Object.keys(imported).length, STRINGS.units.links);
-      renderSettings(container, schedule, { message: S.imported(count) });
+      const newJoins = mergeJoins(await loadJoins(), joins);
+      await addJoins(newJoins);
+      const counts = [pluralize(Object.keys(imported).length, STRINGS.units.links)];
+      if (newJoins.length) counts.push(pluralize(newJoins.length, STRINGS.units.records));
+      renderSettings(container, schedule, { message: S.imported(counts.join(" · ")) });
     } catch (err) {
       console.warn(err);
       status.textContent = S.importError;
@@ -336,6 +385,7 @@ export function renderSettings(container, schedule, { focusKey = null, message =
     profileGroup,
     pushGroup,
     linksGroup,
+    group(S.statsGroup, statsCard()),
     backupGroup,
     about,
   );

@@ -36,6 +36,10 @@ Worker cron (every minute) ──> schedule.json from Pages (cached 30 min in KV
 - «Поділитися з групою» puts the links in the URL's `#fragment` (compressed), which browsers
   never send to a server. Opening such a URL shows what would be added; nothing is saved until
   the student confirms, and entries that would replace their own links start unticked.
+- Each «Приєднатися» tap is logged in IndexedDB on the device (time, class, minutes from start,
+  alert on/off). The home card says how many classes you joined through the app this week; a
+  tap isn't attendance, so it never says "attendance", shows percentages, or mentions missed
+  classes. Settings → Статистика clears it; the backup file includes it.
 - Push messages carry only subject, type, teacher and start time. Tapping one opens the app,
   where the link is. `sw.js` handles pushes only: it has no fetch handler and caches nothing.
 
@@ -57,6 +61,7 @@ Worker cron (every minute) ──> schedule.json from Pages (cached 30 min in KV
 | `worker/` | Cloudflare Worker and `wrangler.toml`: alarm proxy (`worker.js`), push API + cron (`push.js`), Web Push crypto (`webpush.js`), D1 schema (`migrations/`) |
 | `js/share.js`, `js/share-view.js` | «Поділитися з групою»: links in the URL #fragment, and the confirm-before-import screen |
 | `js/push.js`, `sw.js` | Browser side of push: support detection, subscribe, service worker |
+| `js/stats.js`, `js/backup.js` | Local «Приєднатися» taps (IndexedDB) and the weekly card; backup file (v2 = links + stats, v1 still imports) |
 | `.github/workflows/scrape.yml` | Scheduled scraper |
 | `tests/` | `node:test` tests |
 

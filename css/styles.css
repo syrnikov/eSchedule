@@ -771,6 +771,24 @@ a { color: inherit; }
 .push-card-actions .btn { text-decoration: none; }
 .push-card-done { font-weight: 500; color: var(--live); text-align: center; }
 
+/* ---------- Stats card: a big number, a friendly sentence ---------- */
+.stats-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.stats-number {
+  font-size: 44px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.stats-line { font-weight: 500; line-height: 1.3; }
+.stats-sub { margin-top: 2px; font-size: 14px; color: var(--muted); }
+.stats-actions { margin-top: 14px; }
+.btn--danger { background: var(--alarm-soft); color: var(--alarm); box-shadow: none; }
+
 /* ---------- Share with the group ---------- */
 .share-warning {
   display: flex;
