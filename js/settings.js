@@ -1,4 +1,4 @@
-// Settings screen, built from groups: Посилання · Резервна копія · Про застосунок.
+// Settings screen, built from groups (Посилання · Резервна копія) plus a small credits footer.
 // To add a setting later, add another group(...) in renderSettings.
 // Rendered once when opened (not on the 15 s loop, so typing is never interrupted).
 
@@ -126,14 +126,13 @@ export function renderSettings(container, schedule, { focusKey = null, message =
       el("div", { class: "settings-actions" }, exportBtn, importBtn, fileInput),
       status));
 
-  // --- Group: about ---
-  const aboutGroup = group(S.aboutGroup,
-    el("div", { class: "card about" },
-      el("p", { class: "about-tagline" }, S.tagline),
-      el("p", { class: "about-author" }, S.author),
-      el("ul", { class: "about-credits" },
-        S.credits.map((c) => el("li", {},
-          el("a", { href: c.href, target: "_blank", rel: "noopener noreferrer" }, c.text))))));
+  // --- Credits: plain small text at the bottom, not a card ---
+  const about = el("footer", { class: "about" },
+    el("p", { class: "about-tagline" }, S.tagline),
+    el("p", {}, S.author),
+    el("ul", { class: "about-credits" },
+      S.credits.map((c) => el("li", {},
+        el("a", { href: c.href, target: "_blank", rel: "noopener noreferrer" }, c.text)))));
 
   container.replaceChildren(
     el("div", { class: "settings-top" },
@@ -141,7 +140,7 @@ export function renderSettings(container, schedule, { focusKey = null, message =
       el("h1", { class: "settings-title", tabindex: "-1" }, S.title)),
     linksGroup,
     backupGroup,
-    aboutGroup,
+    about,
   );
 
   // Focus the requested field (opening its section if collapsed), or the heading.

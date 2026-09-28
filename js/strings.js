@@ -79,8 +79,7 @@ export const STRINGS = {
     imported: (count) => `Імпортовано: ${count}`,
     importError: "Не вдалося прочитати файл. Потрібен JSON-експорт із цього застосунку.",
 
-    // Group: about
-    aboutGroup: "Про застосунок",
+    // Credits footer
     tagline: "Зроблено з 💛 для навчання без хаосу",
     author: "Розробка: Артем Сирніков",
     credits: [

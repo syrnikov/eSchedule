@@ -466,20 +466,20 @@ a { color: inherit; }
   color: var(--muted);
 }
 
-/* About */
-.about { text-align: center; }
-.about-tagline { font-weight: 500; }
-.about-author { margin-top: 4px; color: var(--muted); }
-.about-credits {
-  margin-top: 14px;
-  padding: 14px 0 0;
-  border-top: 1px solid var(--line);
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: 13px;
+/* Credits footer: quiet attribution, no card */
+.about {
+  margin-top: 12px;
+  padding: 0 8px;
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.5;
   color: var(--muted);
+}
+.about-tagline { font-size: 13px; font-weight: 500; color: var(--text); }
+.about-credits {
+  margin-top: 8px;
+  padding: 0;
+  list-style: none;
 }
 .about-credits a { color: inherit; text-underline-offset: 2px; }
 

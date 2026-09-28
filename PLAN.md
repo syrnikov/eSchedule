@@ -195,7 +195,7 @@ Rules:
 ### Phase 6 — Links settings
 
 - A settings view (simple second screen, or a sheet sliding up). Teacher links are the main list (one link per teacher, with their disciplines for context); per-class `discipline + type` links sit in a collapsed section, still win over the teacher link, and cover classes without a teacher. Same JSON format for both.
-- Settings are organised in groups (Посилання · Резервна копія · Про застосунок) so more settings can be added as new groups; «Про застосунок» holds the credits.
+- Settings are organised in groups (Посилання · Резервна копія) so more settings can be added as new groups; credits sit below them as a small plain footer (no card).
 - Validate URLs (must start with `https://`).
 - «Експортувати» downloads a JSON file; «Імпортувати» loads one. Explain in the UI that links are stored only on this device.
 
