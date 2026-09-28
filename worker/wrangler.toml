@@ -13,7 +13,7 @@ ALLOWED_ORIGINS = "https://syrnikov.github.io"
 # VAPID: the public key is safe to publish. The private key is a secret:
 #   npx wrangler secret put VAPID_PRIVATE_KEY
 # Generate a pair with: node scripts/vapid-keys.mjs
-VAPID_PUBLIC_KEY = ""
+VAPID_PUBLIC_KEY = "BN3cKForI8N5INQRYYLtaLz4gHdeATF6SUf2uEAenivgvQQSobE03GJAtuiPMpZC7vIBiIwefimqDqHchMwm1Yc"
 VAPID_SUBJECT = "https://syrnikov.github.io/eSchedule/"
 
 # Groups that can subscribe. Key = "group|subgroup" exactly as in data/schedule.json.
@@ -26,10 +26,10 @@ region = "Одеська область"
 [[d1_databases]]
 binding = "DB"
 database_name = "pary-push"
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "c17a1704-3c84-42d7-bbbc-903eddc7e4eb"
 migrations_dir = "migrations"
 
 # Schedule cache + last alarm state. Create with: npx wrangler kv namespace create CACHE
 [[kv_namespaces]]
 binding = "CACHE"
-id = "00000000000000000000000000000000"
+id = "c2ad50507d77435eb345832c64613527"
