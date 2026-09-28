@@ -54,22 +54,41 @@ export const STRINGS = {
 
   settingsView: {
     back: "Назад",
-    title: "Посилання на пари",
-    deviceOnly: "Посилання зберігаються лише на цьому пристрої. Зроби експорт, щоб мати резервну копію або перенести їх на інший пристрій.",
-    pairsTitle: "Пари",
-    teachersTitle: "Запасні посилання викладачів",
-    teachersHint: "Використовуються, якщо для пари немає окремого посилання.",
+    title: "Налаштування",
+
+    // Group: links
+    linksGroup: "Посилання",
+    deviceOnly: "Посилання зберігаються лише на цьому пристрої. Зроби резервну копію, щоб перенести їх на інший пристрій.",
+    teachersTitle: "Викладачі",
+    teachersHint: "Одне посилання на всі пари викладача.",
+    pairsTitle: "Окремі посилання для пар",
+    pairsCount: (count) => `збережено: ${count}`,
+    pairsHint: "Мають перевагу над посиланням викладача. Знадобляться для пар без викладача, як-от «Кураторська година».",
     placeholder: "https://zoom.us/j/…",
     invalid: "Посилання має починатися з https://",
     saved: "Збережено",
     storageBlocked: "Не вдалося зберегти: браузер блокує сховище",
+    noSchedule: "Розклад ще не завантажено, тож список порожній.",
+
+    // Group: backup
+    backupGroup: "Резервна копія",
+    backupHint: "Файл JSON з усіма посиланнями. Імпорт додає посилання до вже збережених.",
     export: "Експортувати",
     import: "Імпортувати",
     exportFile: (date) => `pary-links-${date}.json`,
     imported: (count) => `Імпортовано: ${count}`,
     importError: "Не вдалося прочитати файл. Потрібен JSON-експорт із цього застосунку.",
-    noSchedule: "Розклад ще не завантажено, тож список пар порожній.",
-    urlLabel: (name) => `Посилання: ${name}`,
+
+    // Group: about
+    aboutGroup: "Про застосунок",
+    tagline: "Зроблено з 💛 для навчання без хаосу",
+    author: "Розробка: Артем Сирніков",
+    credits: [
+      { text: "Шрифт e-Ukraine — Міністерство цифрової трансформації України", href: "https://thedigital.gov.ua/fonts" },
+      { text: "Іконки Material Symbols — Google, Apache 2.0", href: "https://fonts.google.com/icons" },
+      { text: "Розклад — osau.edu.ua", href: "https://osau.edu.ua/pro-universytet/pratsivnykam/rozklad-zanyat/" },
+      { text: "Дані про тривоги — ubilling.net.ua", href: "https://ubilling.net.ua/aerialalerts/" },
+    ],
   },
 
   // Values that come from the schedule data (not shown as-is, used for matching).

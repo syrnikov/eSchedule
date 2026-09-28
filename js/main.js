@@ -7,7 +7,7 @@ import {
   formatDuration, formatRange, pluralize,
 } from "./format.js";
 import { loadSchedule } from "./schedule.js";
-import { loadLinks, findLink, linkKey } from "./links.js";
+import { loadLinks, findLink, linkKey, teacherKey } from "./links.js";
 import { renderSettings } from "./settings.js";
 import { computeStatus } from "./status.js";
 import { startAlarmWatch } from "./alarm.js";
@@ -114,7 +114,9 @@ function renderHero(status) {
         icon("videocam"), STRINGS.join)
       : el("div", { class: "no-link" },
         icon("link_off", "20"), el("span", {}, STRINGS.noLink),
-        el("a", { href: `#settings:${encodeURIComponent(linkKey(cls))}` }, STRINGS.addLink)));
+        // Teacher links are the main way to add links; classes without a teacher use their own.
+        el("a", { href: `#settings:${encodeURIComponent(cls.teacher ? teacherKey(cls.teacher) : linkKey(cls))}` },
+          STRINGS.addLink)));
   }
 
   // Small alarm notes. "paused" already says it all.
@@ -199,6 +201,7 @@ function render() {
   // alarmPending: first poll hasn't answered yet, so don't flash "unknown".
   const status = { ...computeStatus(now(), schedule, alarm), alarmPending: Boolean(alarm.pending) };
   renderHero(status);
+  announce(status);
   renderToday(status);
   renderTomorrow(status);
   renderFooter();
@@ -222,6 +225,19 @@ async function refreshSchedule() {
 let settingsEmpty = false;
 const settingsOpen = () => location.hash.startsWith("#settings");
 
+// Tab title and screen reader announcement: only when the status actually changes,
+// not on every 15 s re-render.
+let lastAnnounced = "";
+function announce(status) {
+  const { label } = describe(status);
+  const text = status.cls ? `${label} · ${status.cls.discipline}` : label;
+  if (!settingsOpen()) document.title = text;
+  if (text !== lastAnnounced) {
+    lastAnnounced = text;
+    document.getElementById("announcer").textContent = text;
+  }
+}
+
 function route() {
   const open = settingsOpen();
   document.getElementById("main-view").hidden = open;
@@ -230,6 +246,7 @@ function route() {
     const [, rawKey] = location.hash.split(/:(.*)/);
     const focusKey = rawKey ? decodeURIComponent(rawKey) : null;
     settingsEmpty = !schedule;
+    document.title = `${STRINGS.settingsView.title} · ${STRINGS.appTitle}`;
     renderSettings(document.getElementById("settings-view"), schedule, { focusKey });
   } else {
     render(); // links may have changed
@@ -245,6 +262,7 @@ function watchIconFont() {
 
 function boot() {
   document.title = STRINGS.appTitle;
+  document.getElementById("app-heading").textContent = STRINGS.appTitle;
   document.getElementById("settings-btn").setAttribute("aria-label", STRINGS.settings);
   watchIconFont();
   if (!debugAlarm) getAlarm = startAlarmWatch(() => render());

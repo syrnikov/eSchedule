@@ -8,16 +8,25 @@
   <meta name="theme-color" content="#0e1116" media="(prefers-color-scheme: dark)">
   <title>Пари</title>
 
+  <!-- Home screen install -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-title" content="Пари">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
   <!--
     Icon font: Material Symbols Rounded, filled, subset to the icons we use.
     ICON LIST (alphabetical, keep in sync with every icon used in js/):
-      arrow_back, celebration, check_circle, cloud_off, coffee, download, edit_note, history,
-      link_off, lock, radio_button_checked, schedule, school, science, settings, upload, videocam,
-      warning, weekend
+      arrow_back, celebration, check_circle, cloud_off, coffee, download, edit_note, expand_more,
+      history, link_off, lock, radio_button_checked, schedule, school, science, settings, upload,
+      videocam, warning, weekend
   -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,500,1,0&icon_names=arrow_back,celebration,check_circle,cloud_off,coffee,download,edit_note,history,link_off,lock,radio_button_checked,schedule,school,science,settings,upload,videocam,warning,weekend&display=block">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,500,1,0&icon_names=arrow_back,celebration,check_circle,cloud_off,coffee,download,edit_note,expand_more,history,link_off,lock,radio_button_checked,schedule,school,science,settings,upload,videocam,warning,weekend&display=block">
 
   <link rel="stylesheet" href="css/styles.css">
   <script type="module" src="js/main.js"></script>
@@ -35,7 +44,9 @@
         </a>
       </header>
 
-      <section class="card hero" id="hero" aria-live="polite"></section>
+      <h1 class="sr-only" id="app-heading"></h1>
+      <p class="sr-only" id="announcer" aria-live="polite"></p>
+      <section class="card hero" id="hero"></section>
       <section class="card" id="today" hidden></section>
       <section class="card card--compact" id="tomorrow" hidden></section>
 

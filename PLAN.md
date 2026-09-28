@@ -9,7 +9,7 @@
 - [x] Phase 4 — Status engine: `computeStatus` with alarm states, 25 status tests
 - [x] Phase 5 — Air alarm via Cloudflare Worker: live at pary-alarm.noxtrnall.workers.dev
 - [x] Phase 6 — Links settings: `#settings` screen, auto-save, import/export
-- [ ] Phase 7 — Polish
+- [x] Phase 7 — Polish: manifest + icons, status in tab title, a11y pass, README (English), settings regrouped with credits
 
 ## What we're building
 
@@ -194,8 +194,8 @@ Rules:
 
 ### Phase 6 — Links settings
 
-- A settings view (simple second screen, or a sheet sliding up) listing every unique `discipline + type` pair found in the schedule, each with a URL input. Show the teacher name for context.
-- Optional teacher-only fallback links.
+- A settings view (simple second screen, or a sheet sliding up). Teacher links are the main list (one link per teacher, with their disciplines for context); per-class `discipline + type` links sit in a collapsed section, still win over the teacher link, and cover classes without a teacher. Same JSON format for both.
+- Settings are organised in groups (Посилання · Резервна копія · Про застосунок) so more settings can be added as new groups; «Про застосунок» holds the credits.
 - Validate URLs (must start with `https://`).
 - «Експортувати» downloads a JSON file; «Імпортувати» loads one. Explain in the UI that links are stored only on this device.
 

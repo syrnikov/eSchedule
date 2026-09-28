@@ -1,4 +1,5 @@
-// Settings screen: one URL field per discipline+type, teacher fallbacks, import/export.
+// Settings screen, built from groups: Посилання · Резервна копія · Про застосунок.
+// To add a setting later, add another group(...) in renderSettings.
 // Rendered once when opened (not on the 15 s loop, so typing is never interrupted).
 
 import { STRINGS } from "./strings.js";
@@ -10,6 +11,10 @@ import {
 
 const S = STRINGS.settingsView;
 const MAX_IMPORT_BYTES = 100_000;
+
+// A titled group of cards.
+const group = (title, ...cards) =>
+  el("section", { class: "settings-group" }, el("h2", { class: "group-title" }, title), cards);
 
 // focusKey: link key to focus (from the hero's «Додати»), or null.
 export function renderSettings(container, schedule, { focusKey = null, message = "" } = {}) {
@@ -56,12 +61,32 @@ export function renderSettings(container, schedule, { focusKey = null, message =
       msg);
   }
 
-  const pairs = collectPairs(classes).map((p) =>
-    field(p.key, `${p.discipline} · ${p.type}`, p.teachers.join(", ")));
-  const teachers = collectTeachers(classes).map((t) =>
+  // --- Group: links ---
+  const teacherFields = collectTeachers(classes).map((t) =>
     field(t.key, t.teacher, t.disciplines.join(", ")));
 
-  // --- Import / export ---
+  const pairs = collectPairs(classes);
+  const pairFields = pairs.map((p) => field(p.key, `${p.discipline} · ${p.type}`, p.teachers.join(", ")));
+  const savedPairs = pairs.filter((p) => links[p.key]).length;
+
+  // Per-class links are the exception, so they start collapsed.
+  const pairsDetails = el("details", { class: "card disclosure" },
+    el("summary", {},
+      el("span", { class: "disclosure-title" }, S.pairsTitle),
+      savedPairs > 0 && el("span", { class: "disclosure-count" }, S.pairsCount(savedPairs)),
+      icon("expand_more", "20")),
+    el("p", { class: "field-context section-hint" }, S.pairsHint),
+    pairFields);
+
+  const linksGroup = group(S.linksGroup,
+    el("p", { class: "card card--compact device-note" }, icon("lock", "20"), el("span", {}, S.deviceOnly)),
+    el("div", { class: "card" },
+      el("h3", { class: "card-title" }, S.teachersTitle),
+      el("p", { class: "field-context section-hint" }, S.teachersHint),
+      teacherFields.length ? teacherFields : el("p", { class: "field-context" }, S.noSchedule)),
+    pairFields.length > 0 && pairsDetails);
+
+  // --- Group: backup (import / export) ---
   const status = el("p", { class: "settings-status", "aria-live": "polite" }, message);
   const fileInput = el("input", { type: "file", accept: "application/json,.json", hidden: true });
 
@@ -95,25 +120,35 @@ export function renderSettings(container, schedule, { focusKey = null, message =
     }
   });
 
+  const backupGroup = group(S.backupGroup,
+    el("div", { class: "card" },
+      el("p", { class: "field-context section-hint" }, S.backupHint),
+      el("div", { class: "settings-actions" }, exportBtn, importBtn, fileInput),
+      status));
+
+  // --- Group: about ---
+  const aboutGroup = group(S.aboutGroup,
+    el("div", { class: "card about" },
+      el("p", { class: "about-tagline" }, S.tagline),
+      el("p", { class: "about-author" }, S.author),
+      el("ul", { class: "about-credits" },
+        S.credits.map((c) => el("li", {},
+          el("a", { href: c.href, target: "_blank", rel: "noopener noreferrer" }, c.text))))));
+
   container.replaceChildren(
     el("div", { class: "settings-top" },
       el("a", { class: "icon-btn", href: "#", "aria-label": S.back }, icon("arrow_back")),
       el("h1", { class: "settings-title", tabindex: "-1" }, S.title)),
-    el("p", { class: "card card--compact device-note" }, icon("lock", "20"), el("span", {}, S.deviceOnly)),
-    el("section", { class: "card" },
-      el("h2", { class: "card-title" }, S.pairsTitle),
-      pairs.length ? pairs : el("p", { class: "field-context" }, S.noSchedule)),
-    teachers.length > 0 && el("section", { class: "card" },
-      el("h2", { class: "card-title" }, S.teachersTitle),
-      el("p", { class: "field-context section-hint" }, S.teachersHint),
-      teachers),
-    el("section", { class: "settings-actions" }, exportBtn, importBtn, fileInput),
-    status,
+    linksGroup,
+    backupGroup,
+    aboutGroup,
   );
 
-  // Focus the requested field, or the heading so screen readers announce the screen.
+  // Focus the requested field (opening its section if collapsed), or the heading.
   const target = focusKey && [...container.querySelectorAll("input[data-key]")].find((i) => i.dataset.key === focusKey);
   if (target) {
+    const details = target.closest("details");
+    if (details) details.open = true;
     target.focus();
     target.scrollIntoView({ block: "center" });
   } else {
