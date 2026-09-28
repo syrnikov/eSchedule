@@ -17,16 +17,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
-  <!--
-    Icon font: Material Symbols Rounded, filled, subset to the icons we use.
-    ICON LIST (alphabetical, keep in sync with every icon used in js/):
-      add_box, arrow_back, celebration, check_circle, cloud_off, coffee, download, edit_note,
-      expand_more, history, ios_share, link_off, lock, notifications, radio_button_checked, schedule,
-      school, science, settings, upload, videocam, warning, weekend
-  -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,500,1,0&icon_names=add_box,arrow_back,celebration,check_circle,cloud_off,coffee,download,edit_note,expand_more,history,ios_share,link_off,lock,notifications,radio_button_checked,schedule,school,science,settings,upload,videocam,warning,weekend&display=block">
+  <!-- Icon font: self-hosted Material Symbols subset. The icon list is in scripts/icons.mjs. -->
+  <link rel="preload" href="fonts/material-symbols-rounded.woff2" as="font" type="font/woff2" crossorigin>
 
   <link rel="stylesheet" href="css/styles.css">
   <script type="module" src="js/main.js"></script>
@@ -57,6 +49,7 @@
 
     <div class="view" id="settings-view" hidden></div>
     <div class="view" id="welcome-view" hidden></div>
+    <div class="view" id="share-view" hidden></div>
   </main>
 </body>
 </html>

@@ -12,6 +12,7 @@ import {
 import { loadProfile, saveProfile, cleanName, MAX_NAME_LENGTH } from "./profile.js";
 import { pushSupport, loadPushPrefs, applyPush, groupKey, wantsPush, LEADS } from "./push.js";
 import { ALARM_REGION } from "./config.js";
+import { encodeShare, shareUrl } from "./share.js";
 
 const S = STRINGS.settingsView;
 const MAX_IMPORT_BYTES = 100_000;
@@ -30,6 +31,69 @@ function switchRow(id, label, hint, checked) {
       hint && el("span", { class: "field-context" }, hint)),
     input);
   return { row, input };
+}
+
+// «Поділитися з групою»: all saved links in one URL (inside the #fragment, so no server sees them).
+// The URL is prepared ahead of the tap: Safari only allows share/copy right inside the tap itself.
+function shareCard() {
+  const hint = el("p", { class: "field-context section-hint" });
+  const status = el("p", { class: "settings-status", "aria-live": "polite" });
+  const manual = el("div", { class: "share-manual", hidden: true });
+  const button = el("button", { type: "button", class: "btn btn--primary btn--wide" }, icon("group"), S.shareButton);
+  let prepared = null;
+
+  async function prepare() {
+    const links = loadLinks();
+    const count = Object.keys(links).length;
+    hint.textContent = count ? S.shareHint(pluralize(count, STRINGS.units.links)) : S.shareNothing;
+    button.disabled = count === 0;
+    manual.hidden = true;
+    prepared = null;
+    if (count) prepared = shareUrl(location.origin + location.pathname, await encodeShare(links));
+  }
+
+  const say = (text, error = false) => {
+    status.textContent = text;
+    status.className = `settings-status${error ? " is-error" : ""}`;
+  };
+
+  // Last resort: show the URL in a field to copy by hand.
+  const showManual = () => {
+    const field = el("input", { type: "text", readonly: true, "aria-label": S.shareCopyManual, value: prepared });
+    manual.replaceChildren(el("p", { class: "field-context" }, S.shareCopyManual), field);
+    manual.hidden = false;
+    field.focus();
+    field.select();
+  };
+
+  button.addEventListener("click", async () => {
+    if (!prepared) return;
+    say("");
+    if (navigator.share) {
+      try {
+        return await navigator.share({ title: STRINGS.appTitle, text: S.shareText, url: prepared });
+      } catch (err) {
+        if (err?.name === "AbortError") return; // closed the share sheet: fine
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(prepared);
+      say(S.shareCopied);
+    } catch {
+      showManual();
+    }
+  });
+
+  prepare();
+
+  const card = el("div", { class: "card" },
+    el("h3", { class: "card-title" }, S.shareTitle),
+    hint,
+    el("p", { class: "share-warning" }, icon("lock", "20"), el("span", {}, S.shareWarning)),
+    button,
+    manual,
+    status);
+  return { card, prepare };
 }
 
 // «Нагадування»: iOS install steps, a "can't" note, or the actual switches.
@@ -204,13 +268,18 @@ export function renderSettings(container, schedule, { focusKey = null, message =
     el("p", { class: "field-context section-hint" }, S.pairsHint),
     pairFields);
 
+  const share = shareCard();
   const linksGroup = group(S.linksGroup,
     el("p", { class: "card card--compact device-note" }, icon("lock", "20"), el("span", {}, S.deviceOnly)),
     el("div", { class: "card" },
       el("h3", { class: "card-title" }, S.teachersTitle),
       el("p", { class: "field-context section-hint" }, S.teachersHint),
       teacherFields.length ? teacherFields : el("p", { class: "field-context" }, S.noSchedule)),
-    pairFields.length > 0 && pairsDetails);
+    pairFields.length > 0 && pairsDetails,
+    share.card);
+  // A link saved on this screen changes what gets shared. (The field saves first: its own
+  // listener runs before this one, which only hears the event bubble up.)
+  linksGroup.addEventListener("change", (e) => { if (e.target.matches("input[data-key]")) share.prepare(); });
 
   // --- Group: backup (import / export) ---
   const status = el("p", { class: "settings-status", "aria-live": "polite" }, message);

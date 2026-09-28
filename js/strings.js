@@ -100,6 +100,25 @@ export const STRINGS = {
     none: ["Завтра пар немає — можна видихнути 😌", "Завтра вільний день 🙌"],
   },
 
+  // Opening a shared link: confirm before anything is saved.
+  shareImport: {
+    title: "Посилання від групи 🤝",
+    intro: "Ось що хтось із групи тобі надіслав. Вибери, що додати, — збережеться тільки на цьому пристрої.",
+    teacher: "Викладач",
+    pair: "Окрема пара",
+    isNew: "Нове",
+    replaces: "Замінить твоє",
+    yours: "Зараз у тебе:",
+    same: "Вже є",
+    add: (count) => `Додати (${count})`,
+    cancel: "Не зараз",
+    nothingNew: "У тебе вже є всі ці посилання 👌",
+    done: (count) => `Додано: ${count}`,
+    broken: "Це посилання пошкоджене або неповне. Попроси надіслати його ще раз.",
+    tooOld: "Цей браузер не може відкрити таке посилання. Спробуй у свіжішому Chrome чи Safari.",
+    back: "На головну",
+  },
+
   // Home card offering reminders (shown once, in context).
   pushCard: {
     title: "Нагадувати про пари? 🔔",
@@ -180,6 +199,16 @@ export const STRINGS = {
     saved: "Збережено",
     storageBlocked: "Не вдалося зберегти: браузер блокує сховище",
     noSchedule: "Розклад ще не завантажено, тож список порожній.",
+
+    // Share with the group (links travel in the URL's #fragment, never to a server)
+    shareTitle: "Поділитися з групою",
+    shareHint: (count) => `Одне посилання, в якому ${count}. Відкриєш його — і в одногрупників усе з’явиться після підтвердження.`,
+    shareWarning: "Посилання на пари часто містять паролі. Надсилай тільки своїй групі.",
+    shareButton: "Поділитися",
+    shareNothing: "Поки немає чим ділитися: додай хоча б одне посилання.",
+    shareCopied: "Посилання скопійовано — встав його в чат групи",
+    shareCopyManual: "Скопіюй це посилання й надішли групі:",
+    shareText: "Посилання на пари для нашої групи",
 
     // Group: backup
     backupGroup: "Резервна копія",

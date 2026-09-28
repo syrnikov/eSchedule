@@ -3,6 +3,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFile, readdir } from "node:fs/promises";
 import { STRINGS } from "../js/strings.js";
+import { ICONS, FONT_FILE, MANIFEST_FILE } from "../scripts/icons.mjs";
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 const css = await read("css/styles.css");
@@ -74,8 +75,8 @@ for (const [name, theme] of [["light", light], ["dark", dark]]) {
 // --- Icon font subset ---
 
 test("every icon used in js/ is in the font subset, which is sorted", async () => {
-  const subset = html.match(/icon_names=([a-z_,]+)/)[1].split(",");
-  assert.deepEqual(subset, [...subset].sort(), "icon_names must be alphabetical");
+  const subset = ICONS;
+  assert.deepEqual(subset, [...subset].sort(), "ICONS must be alphabetical");
 
   const used = new Set([...Object.values(STRINGS.data.typeIcons), STRINGS.data.defaultTypeIcon]);
   for (const file of await readdir(new URL("../js/", import.meta.url))) {
@@ -86,7 +87,16 @@ test("every icon used in js/ is in the font subset, which is sorted", async () =
   }
   used.add("settings"); // written directly in index.html
   for (const step of STRINGS.settingsView.iosSteps) used.add(step.icon); // icon(step.icon) in settings.js
-  for (const name of used) assert.ok(subset.includes(name), `missing from icon_names: ${name}`);
+  for (const name of used) assert.ok(subset.includes(name), `missing from ICONS in scripts/icons.mjs: ${name}`);
+});
+
+test("icon font is self-hosted, built from the current ICONS list", async () => {
+  const built = JSON.parse(await read(MANIFEST_FILE)).icons;
+  assert.deepEqual(built, ICONS, "ICONS changed: run `node scripts/icons.mjs` to rebuild the font");
+  const font = await readFile(new URL(`../${FONT_FILE}`, import.meta.url));
+  assert.equal(font.subarray(0, 4).toString("latin1"), "wOF2");
+  assert.ok(css.includes(`url("../${FONT_FILE}")`), "styles.css declares the @font-face");
+  assert.doesNotMatch(html, /fonts\.googleapis|fonts\.gstatic/, "no third-party icon font");
 });
 
 // --- Manifest ---

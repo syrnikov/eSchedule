@@ -15,6 +15,8 @@ import { el, icon } from "./dom.js";
 import { greeting, daySummary, tomorrowText, accentIndex, alertMinutes } from "./voice.js";
 import { loadProfile } from "./profile.js";
 import { renderWelcome } from "./welcome.js";
+import { renderShareImport } from "./share-view.js";
+import { SHARE_PREFIX } from "./share.js";
 import {
   pushSupport, loadPushPrefs, applyPush, groupKey, wantsPush, pushCardSnoozed, snoozePushCard,
   registerServiceWorker, resyncPush,
@@ -313,6 +315,9 @@ async function refreshSchedule() {
 // On first launch the main screen waits behind the welcome card. ---
 let settingsEmpty = false;
 let welcomeDone = false; // for this session, in case storage is blocked
+// "#share=…" from a groupmate: held here and wiped from the address bar right away, so the
+// links don't linger in history or get re-shared by accident.
+let pendingShare = null;
 const settingsOpen = () => location.hash.startsWith("#settings");
 
 // Tab title and screen reader announcement: only when the status actually changes,
@@ -329,12 +334,25 @@ function announce(status) {
 }
 
 function route() {
+  if (location.hash.startsWith(SHARE_PREFIX)) {
+    pendingShare = location.hash.slice(SHARE_PREFIX.length);
+    history.replaceState(null, "", location.pathname + location.search);
+  }
   const open = settingsOpen();
-  const welcome = !open && !welcomeDone && !loadProfile().onboarded;
-  document.getElementById("main-view").hidden = open || welcome;
+  // A shared link is why they opened the app, so it comes before the welcome card.
+  const share = !open && pendingShare !== null;
+  const welcome = !open && !share && !welcomeDone && !loadProfile().onboarded;
+  document.getElementById("main-view").hidden = open || share || welcome;
   document.getElementById("settings-view").hidden = !open;
+  document.getElementById("share-view").hidden = !share;
   document.getElementById("welcome-view").hidden = !welcome;
-  if (welcome) {
+  if (share) {
+    document.title = `${STRINGS.shareImport.title} · ${STRINGS.appTitle}`;
+    renderShareImport(document.getElementById("share-view"), pendingShare, () => {
+      pendingShare = null;
+      route();
+    });
+  } else if (welcome) {
     document.title = STRINGS.appTitle;
     renderWelcome(document.getElementById("welcome-view"), () => {
       welcomeDone = true;
@@ -352,10 +370,26 @@ function route() {
   }
 }
 
+// Icons stay invisible until their font is in, so ligature names ("schedule") never flash.
+// Checked on every font load, not once: a single early check that missed the font used to
+// leave icons hidden for good (seen on iOS home-screen apps).
 function watchIconFont() {
-  document.fonts?.load('24px "Material Symbols Rounded"', "schedule")
-    .then((faces) => { if (faces.length) document.documentElement.classList.add("icons-ready"); })
-    .catch(() => { /* icons stay hidden, text still works */ });
+  const root = document.documentElement;
+  const fonts = document.fonts;
+  if (!fonts) return root.classList.add("icons-ready"); // very old browser: better text than nothing
+  const mark = () => {
+    let ready = false;
+    fonts.forEach((f) => {
+      if (f.family.replace(/["']/g, "") === "Material Symbols Rounded" && f.status === "loaded") ready = true;
+    });
+    if (ready) {
+      root.classList.add("icons-ready");
+      fonts.removeEventListener?.("loadingdone", mark);
+    }
+  };
+  fonts.addEventListener?.("loadingdone", mark);
+  fonts.load('24px "Material Symbols Rounded"', "schedule").then(mark, () => {});
+  fonts.ready.then(mark, () => {});
 }
 
 function boot() {

@@ -6,6 +6,15 @@
 @font-face { font-family: "e-Ukraine"; src: url("../fonts/e-Ukraine-Medium.woff2") format("woff2"); font-weight: 500; font-display: swap; }
 @font-face { font-family: "e-Ukraine"; src: url("../fonts/e-Ukraine-Bold.woff2") format("woff2"); font-weight: 700; font-display: swap; }
 
+/* Icon font, self-hosted and subset to the icons we use (see scripts/icons.mjs). */
+@font-face {
+  font-family: "Material Symbols Rounded";
+  src: url("../fonts/material-symbols-rounded.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 500;
+  font-display: block;
+}
+
 /* ---------- Tokens ---------- */
 :root {
   --bg-1: #dcebff;
@@ -635,6 +644,7 @@ a { color: inherit; }
 .btn--primary { background: var(--btn-bg); color: var(--btn-text); }
 .btn--secondary { background: var(--neutral-soft); color: var(--text); box-shadow: inset 0 0 0 1px var(--input-border); }
 .btn--text { background: transparent; color: var(--muted); min-height: 48px; }
+.btn--wide { width: 100%; }
 
 .settings-status {
   text-align: center;
@@ -760,6 +770,94 @@ a { color: inherit; }
 }
 .push-card-actions .btn { text-decoration: none; }
 .push-card-done { font-weight: 500; color: var(--live); text-align: center; }
+
+/* ---------- Share with the group ---------- */
+.share-warning {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--soon-soft);
+  color: var(--soon);
+  font-size: 14px;
+  font-weight: 500;
+}
+.share-warning .icon { margin-top: 1px; }
+.share-manual { margin-top: 12px; }
+.share-manual input {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid var(--input-border);
+  border-radius: 14px;
+  background: var(--input-bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 16px;
+}
+
+/* Import screen (#share=…) */
+.share { padding: 24px 20px 20px; }
+.share-title { font-size: 26px; font-weight: 700; line-height: 1.2; }
+.share-title:focus { outline: none; }
+.share-intro { margin-top: 8px; color: var(--muted); }
+.share-intro.is-error { color: var(--alarm); font-weight: 500; }
+.share-intro.is-saved { color: var(--live); font-weight: 500; }
+.share-list { list-style: none; padding: 0; margin: 16px 0 0; }
+.share-item { border-top: 1px solid var(--line); }
+.share-item:first-child { border-top: 0; }
+.share-row {
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  gap: 12px;
+  align-items: start;
+  padding: 14px 0;
+  min-height: 44px;
+  cursor: pointer;
+}
+.share-check {
+  width: 22px;
+  height: 22px;
+  margin: 2px 0 0;
+  accent-color: var(--live);
+  cursor: pointer;
+}
+.share-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.share-kind {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.share-name { font-weight: 500; line-height: 1.3; overflow-wrap: anywhere; }
+.share-url {
+  font-size: 13px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.share-badge {
+  margin-left: auto;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--neutral-soft);
+  color: var(--muted);
+}
+.share-badge--new { background: var(--live-soft); color: var(--live); }
+.share-badge--replace { background: var(--soon-soft); color: var(--soon); }
+.share-item.is-same .share-row { cursor: default; }
+.share-actions {
+  display: grid;
+  gap: 4px;
+  margin-top: 16px;
+}
 
 /* ---------- Welcome (first launch) ---------- */
 #welcome-view { min-height: calc(100dvh - 48px); justify-content: center; }

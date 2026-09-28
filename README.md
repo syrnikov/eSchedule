@@ -33,6 +33,9 @@ Worker cron (every minute) ──> schedule.json from Pages (cached 30 min in KV
 - The alarm feed has no CORS headers, so a tiny Cloudflare Worker proxies it for this site only.
 - Links often contain passcodes, so they live only in your browser. Use export/import in
   settings to back them up or move them to another device.
+- «Поділитися з групою» puts the links in the URL's `#fragment` (compressed), which browsers
+  never send to a server. Opening such a URL shows what would be added; nothing is saved until
+  the student confirms, and entries that would replace their own links start unticked.
 - Push messages carry only subject, type, teacher and start time. Tapping one opens the app,
   where the link is. `sw.js` handles pushes only: it has no fetch handler and caches nothing.
 
@@ -52,6 +55,7 @@ Worker cron (every minute) ──> schedule.json from Pages (cached 30 min in KV
 | `js/config.js` | Worker URL and alarm region |
 | `scraper/` | `scrape.mjs` (fetch + write), `parse.mjs` (pure), saved API responses in `fixtures/` |
 | `worker/` | Cloudflare Worker and `wrangler.toml`: alarm proxy (`worker.js`), push API + cron (`push.js`), Web Push crypto (`webpush.js`), D1 schema (`migrations/`) |
+| `js/share.js`, `js/share-view.js` | «Поділитися з групою»: links in the URL #fragment, and the confirm-before-import screen |
 | `js/push.js`, `sw.js` | Browser side of push: support detection, subscribe, service worker |
 | `.github/workflows/scrape.yml` | Scheduled scraper |
 | `tests/` | `node:test` tests |
@@ -110,8 +114,9 @@ answers the GitHub Pages origin.
   per day, so text varies day to day but never flickers.
 - **Colours.** The tokens at the top of `css/styles.css` (light) and in the dark-mode block.
   `npm test` checks that text contrast stays at WCAG AA.
-- **A new icon.** Add its name to `icon_names` in `index.html`, in alphabetical order, and to the
-  comment list above it. A test fails if an icon used in `js/` is missing.
+- **A new icon.** Add its name to `ICONS` in `scripts/icons.mjs` (alphabetical), then run
+  `node scripts/icons.mjs` to rebuild the self-hosted font in `fonts/`. A test fails if an icon
+  used in `js/` is missing, or if the font wasn't rebuilt.
 
 ## Credits
 
