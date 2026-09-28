@@ -3,7 +3,7 @@
 ## Progress
 
 - [x] Phase 0 — Reconnaissance: schedule comes from a JSON API at vnz.osvita.net (see `RECON.md`)
-- [ ] Phase 1 — Scraper and parser
+- [x] Phase 1 — Scraper and parser: `npm run scrape`, 13 tests passing (`npm test`)
 - [ ] Phase 2 — GitHub Actions
 - [ ] Phase 3 — Static UI with the real schedule
 - [ ] Phase 4 — Status engine
