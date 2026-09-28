@@ -1,0 +1,8 @@
+# Cloudflare Worker config. Deploy with: npx wrangler deploy (from this folder)
+name = "pary-alarm"
+main = "worker.js"
+compatibility_date = "2026-09-01"
+
+[vars]
+# Only this origin may read the responses (comma-separated if you ever need more).
+ALLOWED_ORIGINS = "https://syrnikov.github.io"

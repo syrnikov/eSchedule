@@ -9,6 +9,7 @@ import {
 import { loadSchedule } from "./schedule.js";
 import { loadLinks, findLink } from "./links.js";
 import { computeStatus } from "./status.js";
+import { startAlarmWatch } from "./alarm.js";
 
 const RENDER_EVERY_MS = 15_000;
 const RELOAD_SCHEDULE_EVERY_MS = 30 * 60_000;
@@ -28,7 +29,7 @@ const STATUS_ICONS = {
 
 // --- Debug params for checking states by hand ---
 //   ?now=2026-09-28T08:30          fake the clock (Kyiv time)
-//   ?alarm=alert|unknown|resumed   fake the alarm (until Phase 5 wires the real feed)
+//   ?alarm=alert|unknown|resumed   fake the alarm instead of using the real feed
 const params = new URLSearchParams(location.search);
 const debugStart = kyivLocalToDate(params.get("now") ?? "");
 const debugAlarm = params.get("alarm");
@@ -37,6 +38,7 @@ const now = () => (debugStart ? new Date(debugStart.getTime() + Date.now() - boo
 
 let schedule = null;
 let loadFailed = false;
+let getAlarm = () => ({ state: "unknown", seenSince: null, clearedAt: null, pending: true });
 
 // --- Tiny DOM helper: el("p", { class: "x" }, "text", childNode) ---
 function el(tag, attrs = {}, ...children) {
@@ -130,7 +132,7 @@ function renderHero(status) {
   // Small alarm notes. "paused" already says it all.
   if (status.alarm === "alert" && status.state !== "paused") {
     parts.push(el("p", { class: "alarm-note alarm-note--active" }, icon("warning", "20"), STRINGS.alarm.active));
-  } else if (status.alarm === "unknown") {
+  } else if (status.alarm === "unknown" && !status.alarmPending) {
     parts.push(el("p", { class: "alarm-note" }, STRINGS.alarm.unknown));
   }
 
@@ -194,18 +196,20 @@ function renderClock() {
   if (dateEl.textContent !== date) dateEl.textContent = date;
 }
 
-// Phase 5 replaces this with the real feed from alarm.js.
 function currentAlarm() {
   const t = now();
   if (debugAlarm === "alert") return { state: "alert", seenSince: t, clearedAt: null };
   if (debugAlarm === "unknown") return { state: "unknown", seenSince: null, clearedAt: null };
   if (debugAlarm === "resumed") return { state: "clear", seenSince: null, clearedAt: new Date(debugStart ?? bootedAt) };
-  return { state: "clear", seenSince: null, clearedAt: null };
+  if (debugAlarm === "clear") return { state: "clear", seenSince: null, clearedAt: null };
+  return getAlarm();
 }
 
 let lastMinute = -1;
 function render() {
-  const status = computeStatus(now(), schedule, currentAlarm());
+  const alarm = currentAlarm();
+  // alarmPending: first poll hasn't answered yet, so don't flash "unknown".
+  const status = { ...computeStatus(now(), schedule, alarm), alarmPending: Boolean(alarm.pending) };
   renderHero(status);
   renderToday(status);
   renderTomorrow(status);
@@ -234,6 +238,7 @@ function boot() {
   document.title = STRINGS.appTitle;
   document.getElementById("settings-btn").setAttribute("aria-label", STRINGS.settings);
   watchIconFont();
+  if (!debugAlarm) getAlarm = startAlarmWatch(() => render());
 
   renderClock();
   render();

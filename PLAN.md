@@ -7,7 +7,7 @@
 - [x] Phase 2 — GitHub Actions: first run green on GitHub
 - [x] Phase 3 — Static UI with the real schedule: live on GitHub Pages, e-Ukraine woff2 in `fonts/`
 - [x] Phase 4 — Status engine: `computeStatus` with alarm states, 25 status tests
-- [ ] Phase 5 — Air alarm via Cloudflare Worker
+- [ ] Phase 5 — Air alarm via Cloudflare Worker: Worker + `alarm.js` written and tested; waiting for deploy
 - [ ] Phase 6 — Links settings
 - [ ] Phase 7 — Polish
 
@@ -186,10 +186,10 @@ Rules:
 
 ### Phase 5 — Air alarm via Cloudflare Worker
 
-1. `worker/worker.js`: fetch `https://ubilling.net.ua/aerialalerts/`, return it with `Access-Control-Allow-Origin` set to my GitHub Pages origin only (not `*`), and cache the response for 60 seconds with the Cache API so we respect the feed's rate limits. Set a descriptive `User-Agent`. Return a clear JSON error on failure.
+1. `worker/worker.js`: fetch `https://ubilling.net.ua/aerialalerts/`, return it with `Access-Control-Allow-Origin` set to my GitHub Pages origin only (not `*`), and cache the response for 60 seconds so we respect the feed's rate limits. The Cache API is a no-op on `*.workers.dev` (it only works on custom domains), so the Worker also keeps an in-memory copy; the Cache API kicks in if a custom domain is added later. Set a descriptive `User-Agent`. Return a clear JSON error on failure.
 2. Response format: `{ "source": "...", "cachedat": "...", "states": { "Одеська область": { "alertnow": true, "changed": "..." }, ... } }`. Keys are Cyrillic (JSON-escaped). Look up `"Одеська область"`; put the region name in a config constant.
 3. Known limitations: the feed is **oblast-level only**, and its `changed` timestamp is unreliable. So track "seen since" client-side from when we first observed `alertnow: true`.
-4. `alarm.js`: poll every 60s, and immediately when the tab becomes visible again. Back off to 5 min after repeated failures.
+4. `alarm.js`: poll every 60s, and immediately when the tab becomes visible again. Back off to 5 min after repeated failures. If the feed fails while an alert is active, keep showing the alert (never silently drop to "clear"); otherwise fall back to `"unknown"`. Worker URL and region live in `js/config.js`.
 5. Walk me through deploying with `wrangler` step by step, since I've never used Cloudflare Workers. Put the Worker URL in one config constant.
 
 ### Phase 6 — Links settings
