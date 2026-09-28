@@ -2,40 +2,10 @@
   "group": "208-бак-3к денне 26-27",
   "subgroup": "1б",
   "source": "https://osau.edu.ua/pro-universytet/pratsivnykam/rozklad-zanyat/",
-  "fetchedAt": "2026-09-28T07:20:19Z",
-  "rangeFrom": "2026-09-28",
-  "rangeTo": "2026-10-11",
+  "fetchedAt": "2026-09-28T22:45:25Z",
+  "rangeFrom": "2026-09-29",
+  "rangeTo": "2026-10-12",
   "classes": [
-    {
-      "date": "2026-09-28",
-      "start": "08:15",
-      "end": "09:35",
-      "discipline": "Іноземна мова",
-      "type": "Практичні",
-      "room": "онлайн",
-      "teacher": "Насакіна С. В.",
-      "audience": "group"
-    },
-    {
-      "date": "2026-09-28",
-      "start": "09:45",
-      "end": "11:05",
-      "discipline": "Трактори і автомобілі",
-      "type": "Практичні",
-      "room": "онлайн",
-      "teacher": "Дядюра К. О.",
-      "audience": "group"
-    },
-    {
-      "date": "2026-09-28",
-      "start": "11:15",
-      "end": "12:35",
-      "discipline": "Теплотехніка та гідравлика",
-      "type": "Лекції",
-      "room": "онлайн",
-      "teacher": "Уминський С. М.",
-      "audience": "group"
-    },
     {
       "date": "2026-09-29",
       "start": "08:15",
@@ -284,6 +254,36 @@
       "type": "Практичні",
       "room": "онлайн",
       "teacher": "Макарчук В. І.",
+      "audience": "group"
+    },
+    {
+      "date": "2026-10-12",
+      "start": "08:15",
+      "end": "09:35",
+      "discipline": "Іноземна мова",
+      "type": "Практичні",
+      "room": "онлайн",
+      "teacher": "Насакіна С. В.",
+      "audience": "group"
+    },
+    {
+      "date": "2026-10-12",
+      "start": "09:45",
+      "end": "11:05",
+      "discipline": "Трактори і автомобілі",
+      "type": "Практичні",
+      "room": "онлайн",
+      "teacher": "Дядюра К. О.",
+      "audience": "group"
+    },
+    {
+      "date": "2026-10-12",
+      "start": "11:15",
+      "end": "12:35",
+      "discipline": "Теплотехніка та гідравлика",
+      "type": "Лекції",
+      "room": "онлайн",
+      "teacher": "Уминський С. М.",
       "audience": "group"
     }
   ]
