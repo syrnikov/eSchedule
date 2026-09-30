@@ -2,50 +2,10 @@
   "group": "208-бак-3к денне 26-27",
   "subgroup": "1б",
   "source": "https://osau.edu.ua/pro-universytet/pratsivnykam/rozklad-zanyat/",
-  "fetchedAt": "2026-09-30T11:34:45Z",
-  "rangeFrom": "2026-09-30",
-  "rangeTo": "2026-10-13",
+  "fetchedAt": "2026-09-30T21:39:49Z",
+  "rangeFrom": "2026-10-01",
+  "rangeTo": "2026-10-14",
   "classes": [
-    {
-      "date": "2026-09-30",
-      "start": "09:45",
-      "end": "11:05",
-      "discipline": "Соціальна робота в громаді",
-      "type": "Лекції",
-      "room": "онлайн",
-      "teacher": "Варивода Ю. Ю.",
-      "audience": "group"
-    },
-    {
-      "date": "2026-09-30",
-      "start": "11:15",
-      "end": "12:35",
-      "discipline": "ІТ-технології в проектуванні",
-      "type": "Лабораторні",
-      "room": "онлайн",
-      "teacher": "Мартинова О. Б.",
-      "audience": "subgroup"
-    },
-    {
-      "date": "2026-09-30",
-      "start": "12:50",
-      "end": "14:10",
-      "discipline": "Кураторська година",
-      "type": "Лекції",
-      "room": "",
-      "teacher": "",
-      "audience": "group"
-    },
-    {
-      "date": "2026-09-30",
-      "start": "14:20",
-      "end": "15:40",
-      "discipline": "Технологія машинобудування",
-      "type": "Практичні",
-      "room": "онлайн",
-      "teacher": "Устуянов П. Д.",
-      "audience": "group"
-    },
     {
       "date": "2026-10-01",
       "start": "09:45",
@@ -284,6 +244,46 @@
       "type": "Лекції",
       "room": "онлайн",
       "teacher": "Житков С. С.",
+      "audience": "group"
+    },
+    {
+      "date": "2026-10-14",
+      "start": "09:45",
+      "end": "11:05",
+      "discipline": "Соціальна робота в громаді",
+      "type": "Лекції",
+      "room": "онлайн",
+      "teacher": "Варивода Ю. Ю.",
+      "audience": "group"
+    },
+    {
+      "date": "2026-10-14",
+      "start": "11:15",
+      "end": "12:35",
+      "discipline": "ІТ-технології в проектуванні",
+      "type": "Лабораторні",
+      "room": "онлайн",
+      "teacher": "Мартинова О. Б.",
+      "audience": "subgroup"
+    },
+    {
+      "date": "2026-10-14",
+      "start": "12:50",
+      "end": "14:10",
+      "discipline": "Кураторська година",
+      "type": "Лекції",
+      "room": "",
+      "teacher": "",
+      "audience": "group"
+    },
+    {
+      "date": "2026-10-14",
+      "start": "14:20",
+      "end": "15:40",
+      "discipline": "Технологія машинобудування",
+      "type": "Практичні",
+      "room": "онлайн",
+      "teacher": "Устуянов П. Д.",
       "audience": "group"
     }
   ]
