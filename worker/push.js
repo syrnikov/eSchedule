@@ -12,6 +12,7 @@
 import { STRINGS } from "../js/strings.js";
 import { kyivParts, toMinutes, formatDuration } from "../js/format.js";
 import { validateSchedule } from "../js/schedule.js";
+import { SOON_MINUTES } from "../js/status.js";
 import { sendPush, b64urlDecode } from "./webpush.js";
 
 export const LEADS = [5, 10, 15];
@@ -248,6 +249,13 @@ export async function runCron(env, now = new Date(), { fetchImpl = fetch } = {})
     if (!schedule) continue;
     const todays = schedule.classes.filter((c) => c.date === date);
 
+    // The alarm comes first: a reminder sent during an alert should say so.
+    let alarm = null;
+    if (cfg.region) {
+      feed ??= await fetchFeed(fetchImpl);
+      alarm = await getAlarm(env, cfg.region, feed, now);
+    }
+
     // 1. "Через 5 хв — …": the next class that starts within the longest lead time.
     const next = todays.find((c) => {
       const until = toMinutes(c.start) - minutes;
@@ -257,10 +265,12 @@ export async function runCron(env, now = new Date(), { fetchImpl = fetch } = {})
       const until = toMinutes(next.start) - minutes;
       const key = `${next.date} ${next.start}`;
       const rows = await store.dueReminders(group, until, key, budget);
+      const body = STRINGS.push.reminderBody(next.type, next.teacher, next.start);
       const message = {
         title: STRINGS.push.reminderTitle(formatDuration(until), next.discipline),
-        body: STRINGS.push.reminderBody(next.type, next.teacher, next.start),
         tag: `class-${key}`,
+        // Tapping opens the «Приєднатися» screen. Not during an alert: shelter first.
+        ...(alarm?.alert ? { body: STRINGS.push.reminderBodyAlert(body) } : { body, view: "join" }),
       };
       const { done, gone } = await deliver(rows, message, vapid, { fetchImpl, ttl: until * 60 });
       await store.mark("last_reminder", done, key);
@@ -269,21 +279,32 @@ export async function runCron(env, now = new Date(), { fetchImpl = fetch } = {})
       sent += done.length;
     }
 
-    // 2. Air alert started or ended during a class (opt-in).
-    if (!cfg.region) continue;
-    feed ??= await fetchFeed(fetchImpl);
-    const alarm = await getAlarm(env, cfg.region, feed, now);
+    // 2. Air alert started or ended during a class, or just before one starts (opt-in).
+    //    Same rule as the "paused" state on the screen (js/status.js).
     const live = todays.find((c) => toMinutes(c.start) <= minutes && minutes < toMinutes(c.end));
+    const soon = live ? null : todays.find((c) => {
+      const until = toMinutes(c.start) - minutes;
+      return until > 0 && until <= SOON_MINUTES;
+    });
     const fresh = alarm && !alarm.firstSeen && now - new Date(alarm.changedAt) < ALERT_PUSH_WINDOW_MS;
-    if (live && fresh && budget > 0) {
+    if ((live || soon) && fresh && budget > 0) {
       const key = `${alarm.alert ? "alert" : "clear"}@${alarm.changedAt}`;
       const rows = await store.dueAlerts(group, key, budget);
       const lasted = !alarm.alert && alarm.alertSince
         ? Math.round((new Date(alarm.changedAt) - new Date(alarm.alertSince)) / 60_000)
         : 0;
       const message = alarm.alert
-        ? { title: STRINGS.push.alertTitle(cfg.region), body: STRINGS.push.alertBody, tag: "alarm" }
-        : { title: STRINGS.push.clearTitle, body: STRINGS.push.clearBody(lasted > 0 ? formatDuration(lasted) : ""), tag: "alarm" };
+        ? {
+          title: STRINGS.push.alertTitle(cfg.region),
+          body: soon ? STRINGS.push.alertBodySoon(soon.start) : STRINGS.push.alertBody,
+          tag: "alarm",
+        }
+        : {
+          title: STRINGS.push.clearTitle,
+          body: soon ? STRINGS.push.clearBodySoon(soon.start) : STRINGS.push.clearBody(lasted > 0 ? formatDuration(lasted) : ""),
+          tag: "alarm",
+          view: "join", // back to class in one tap
+        };
       const { done, gone } = await deliver(rows, message, vapid, { fetchImpl, ttl: 600 });
       await store.mark("last_alert", done, key);
       await store.removeMany(gone);

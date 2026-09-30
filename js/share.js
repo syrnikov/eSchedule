@@ -8,8 +8,11 @@
 // shape is checked, only https links survive, and the UI renders it all as text.
 
 import { isValidUrl } from "./links.js";
+import { hash } from "./strings.js";
 
 export const SHARE_PREFIX = "#share=";
+const SEEN_KEY = "pary.share.seen";
+const MAX_SEEN = 20;
 const VERSION = 1;
 export const MAX_FRAGMENT_LENGTH = 32_000; // characters after "#share="
 export const MAX_JSON_BYTES = 100_000; // after decompressing (a zip bomb stops here)
@@ -133,6 +136,35 @@ export async function decodeShare(fragment) {
 }
 
 export const shareUrl = (base, encoded) => `${base}${SHARE_PREFIX}${encoded}`;
+
+// --- Shares already dealt with ---
+// On iPhone the share stays in the URL the home-screen app starts from (that's how the links
+// get into the installed app), so every launch carries it. Each share is offered only once.
+
+// Short id for a fragment: not the links themselves, just enough to recognise it again.
+export const shareId = (fragment) => `${fragment.length}.${hash(fragment).toString(36)}`;
+
+// PURE: the seen list with one more id, newest last, capped.
+export function rememberShare(seen, id) {
+  return [...seen.filter((s) => s !== id), id].slice(-MAX_SEEN);
+}
+
+function loadSeen() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(SEEN_KEY) ?? "[]");
+    return Array.isArray(saved) ? saved.filter((s) => typeof s === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+export const isShareSeen = (fragment) => loadSeen().includes(shareId(fragment));
+
+export function markShareSeen(fragment) {
+  try {
+    localStorage.setItem(SEEN_KEY, JSON.stringify(rememberShare(loadSeen(), shareId(fragment))));
+  } catch { /* storage blocked: main.js also remembers for this session */ }
+}
 
 // What importing would do, entry by entry. Teachers first, then per-class links, by name.
 // status: "new" | "replace" (you have a different link) | "same" (you already have this one)

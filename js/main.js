@@ -6,6 +6,7 @@ import {
   formatClock, formatLongDate, formatDayMonth, formatIsoDayMonth,
   formatDuration, formatRange, pluralize, keepName,
 } from "./format.js";
+import { classRow, typeIcon, joinDot, showRoom } from "./class-row.js";
 import { loadSchedule } from "./schedule.js";
 import { loadLinks, findLink, linkKey, teacherKey } from "./links.js";
 import { renderSettings } from "./settings.js";
@@ -13,14 +14,15 @@ import { computeStatus } from "./status.js";
 import { startAlarmWatch } from "./alarm.js";
 import { el, icon } from "./dom.js";
 import { greeting, daySummary, tomorrowText, accentIndex, alertMinutes } from "./voice.js";
-import { loadProfile } from "./profile.js";
-import { renderWelcome } from "./welcome.js";
-import { renderShareImport } from "./share-view.js";
-import { SHARE_PREFIX } from "./share.js";
+import { loadProfile, saveProfile, shouldShowNews } from "./profile.js";
+import { renderOnboarding, featureRows } from "./onboarding.js";
+import { renderDays } from "./days-view.js";
+import { renderJoin, joinTarget } from "./join-view.js";
+import { SHARE_PREFIX, isShareSeen, markShareSeen } from "./share.js";
 import { loadJoins, logJoin, makeJoin, weekSummary } from "./stats.js";
 import {
   pushSupport, loadPushPrefs, applyPush, groupKey, wantsPush, pushCardSnoozed, snoozePushCard,
-  registerServiceWorker, resyncPush,
+  registerServiceWorker, resyncPush, isIos, isStandalone,
 } from "./push.js";
 
 const RENDER_EVERY_MS = 15_000;
@@ -51,10 +53,6 @@ const now = () => (debugStart ? new Date(debugStart.getTime() + Date.now() - boo
 let schedule = null;
 let loadFailed = false;
 let getAlarm = () => ({ state: "unknown", seenSince: null, clearedAt: null, pending: true });
-
-const typeIcon = (type) => STRINGS.data.typeIcons[type] ?? STRINGS.data.defaultTypeIcon;
-const joinDot = (...parts) => parts.filter(Boolean).join(" · ");
-const showRoom = (room) => (room && room !== STRINGS.data.onlineRoom ? room : "");
 
 // "Завтра перша пара о 09:45" / "Наступна пара в понеділок" / "Попереду пар немає"
 function nextClassText(today, nextClass) {
@@ -175,12 +173,7 @@ function renderToday(status) {
   const rows = todays.map((c) => {
     const past = toMinutes(c.end) <= nowMin;
     const live = !past && toMinutes(c.start) <= nowMin;
-    return el("li", { class: `row${past ? " is-past" : ""}${live ? " is-now" : ""}` },
-      el("div", { class: "row-time" }, c.start, el("small", {}, c.end)),
-      el("div", {},
-        el("div", { class: "row-title" }, icon(typeIcon(c.type), "20"), el("span", {}, c.discipline)),
-        el("div", { class: "row-sub" }, joinDot(c.type, keepName(c.teacher), showRoom(c.room)))),
-      live ? el("span", { class: "badge" }, STRINGS.nowBadge) : el("span"));
+    return classRow(c, { past, live });
   });
 
   const title = STRINGS.today(pluralize(todays.length, STRINGS.units.classes));
@@ -195,9 +188,12 @@ function renderTomorrow(status) {
 
   const list = schedule.classes.filter((c) => c.date === tomorrow);
   const { line, sub } = tomorrowText(list, status.today);
-  card.replaceChildren(el("div", { class: "tomorrow" },
-    el("p", { class: "tomorrow-line" }, line),
-    sub && el("p", { class: "tomorrow-sub" }, sub)));
+  // The whole card opens «Наступні дні».
+  card.replaceChildren(el("a", { class: "tomorrow", href: "#days", "aria-label": `${line}. ${STRINGS.days.open}` },
+    el("div", {},
+      el("p", { class: "tomorrow-line" }, line),
+      sub && el("p", { class: "tomorrow-sub" }, sub)),
+    icon("chevron_right")));
 }
 
 // "11 пар цього тижня через «Приєднатися» 🎓": only once there's enough to say.
@@ -347,18 +343,34 @@ async function refreshSchedule() {
     loadFailed = !schedule; // keep showing the last good copy if we have one
   }
   render();
-  // Settings opened before the schedule arrived: fill in the list now.
-  if (settingsOpen() && settingsEmpty && schedule) route();
+  // A screen opened before the schedule arrived: fill it in now.
+  if (((settingsOpen() || daysOpen()) && viewEmpty && schedule) || joinOpen()) route();
 }
 
-// --- Routing: "#settings" or "#settings:<link key>" opens settings, anything else the main screen.
-// On first launch the main screen waits behind the welcome card. ---
-let settingsEmpty = false;
-let welcomeDone = false; // for this session, in case storage is blocked
-// "#share=…" from a groupmate: held here and wiped from the address bar right away, so the
-// links don't linger in history or get re-shared by accident.
+// --- Routing ---
+//   #settings, #settings:<link key>   settings
+//   #days                             the days ahead
+//   #join                             one class, one button (from a push)
+//   #share=…                          links from a groupmate (goes through onboarding)
+//   anything else                     the main screen
+// On first launch the main screen waits behind the onboarding pages.
+const VIEWS = ["main", "settings", "days", "join", "onboarding"];
+let currentView = "main";
+let viewEmpty = false; // settings or days opened before the schedule arrived
+let onboardingActive = false;
+let onboardingDone = false; // for this session, in case storage is blocked
 let pendingShare = null;
+let handledShare = null; // same, for the share
+let newsShown = false;
 const settingsOpen = () => location.hash.startsWith("#settings");
+const daysOpen = () => location.hash === "#days";
+const joinOpen = () => location.hash === "#join";
+const dropHash = () => history.replaceState(null, "", location.pathname + location.search);
+
+function showView(name) {
+  for (const v of VIEWS) document.getElementById(`${v}-view`).hidden = v !== name;
+  currentView = name;
+}
 
 // Tab title and screen reader announcement: only when the status actually changes,
 // not on every 15 s re-render.
@@ -366,48 +378,103 @@ let lastAnnounced = "";
 function announce(status) {
   const { label } = describe(status);
   const text = status.cls ? `${label} · ${status.cls.discipline}` : label;
-  if (!settingsOpen()) document.title = text;
+  if (currentView === "main") document.title = text;
   if (text !== lastAnnounced) {
     lastAnnounced = text;
     document.getElementById("announcer").textContent = text;
   }
 }
 
+// "#share=…" from a groupmate: held here and wiped from the address bar right away, so the
+// links don't linger in history or get re-shared by accident.
+// The exception is an iPhone browser tab. The home-screen app gets its own empty storage, so
+// the only way the links reach it is inside the address it's added from: the share stays in
+// the address bar, and the manifest (whose start_url would replace that address) is dropped.
+function takeShare() {
+  if (!location.hash.startsWith(SHARE_PREFIX)) return;
+  const fragment = location.hash.slice(SHARE_PREFIX.length);
+  if (isIos(navigator) && !isStandalone()) document.querySelector('link[rel="manifest"]')?.remove();
+  else dropHash();
+  // The installed app starts from that address every time: offer each share only once.
+  if (fragment !== handledShare && !isShareSeen(fragment)) pendingShare = fragment;
+}
+
+// The class to join right now and its link, or null.
+function joinNow() {
+  const status = computeStatus(now(), schedule, currentAlarm());
+  const cls = joinTarget(status);
+  const url = cls && findLink(loadLinks(), cls);
+  return url ? { cls, url, label: describe(status).label } : null;
+}
+
+// «Що нового»: once per version, for students who already use the app. Not during an alert.
+function maybeShowNews() {
+  const dialog = document.getElementById("news");
+  const N = STRINGS.whatsNew;
+  if (newsShown || typeof dialog.showModal !== "function") return;
+  if (!shouldShowNews(loadProfile(), N.version) || lastStatus?.state === "paused") return;
+  newsShown = true;
+
+  const close = el("button", { type: "button", class: "btn btn--primary btn--wide" }, N.button);
+  const seen = () => saveProfile({ newsSeen: N.version });
+  close.addEventListener("click", () => { seen(); dialog.close(); });
+  dialog.addEventListener("close", seen, { once: true }); // closed with Esc / the back gesture
+  dialog.replaceChildren(el("h2", { class: "news-title", id: "news-title" }, N.title), featureRows(N.items), close);
+  dialog.showModal();
+}
+
 function route() {
-  if (location.hash.startsWith(SHARE_PREFIX)) {
-    pendingShare = location.hash.slice(SHARE_PREFIX.length);
-    history.replaceState(null, "", location.pathname + location.search);
-  }
-  const open = settingsOpen();
-  // A shared link is why they opened the app, so it comes before the welcome card.
-  const share = !open && pendingShare !== null;
-  const welcome = !open && !share && !welcomeDone && !loadProfile().onboarded;
-  document.getElementById("main-view").hidden = open || share || welcome;
-  document.getElementById("settings-view").hidden = !open;
-  document.getElementById("share-view").hidden = !share;
-  document.getElementById("welcome-view").hidden = !welcome;
-  if (share) {
-    document.title = `${STRINGS.shareImport.title} · ${STRINGS.appTitle}`;
-    renderShareImport(document.getElementById("share-view"), pendingShare, () => {
-      pendingShare = null;
-      route();
-    });
-  } else if (welcome) {
+  takeShare();
+  if (onboardingActive) return; // its pages are up; they call back when done
+
+  const settings = settingsOpen();
+  const onboard = !settings && (pendingShare !== null || (!onboardingDone && !loadProfile().onboarded));
+  const join = !settings && !onboard && joinOpen() ? joinNow() : null;
+  // Nothing to join (or no link for it): the home screen is the right place. Before the
+  // schedule has loaded we don't know yet, so the hash stays and refreshSchedule() asks again.
+  if (joinOpen() && !join && !onboard && (schedule || loadFailed)) dropHash();
+
+  if (onboard) {
+    showView("onboarding");
+    onboardingActive = true;
     document.title = STRINGS.appTitle;
-    renderWelcome(document.getElementById("welcome-view"), () => {
-      welcomeDone = true;
-      route();
+    const fragment = pendingShare;
+    renderOnboarding(document.getElementById("onboarding-view"), {
+      fragment,
+      getSchedule: () => schedule,
+      onDone: () => {
+        if (fragment !== null) { handledShare = fragment; markShareSeen(fragment); }
+        pendingShare = null;
+        onboardingDone = true;
+        onboardingActive = false;
+        route();
+      },
     });
-  } else if (open) {
+  } else if (settings) {
+    showView("settings");
     const [, rawKey] = location.hash.split(/:(.*)/);
     const focusKey = rawKey ? decodeURIComponent(rawKey) : null;
-    settingsEmpty = !schedule;
+    viewEmpty = !schedule;
     document.title = `${STRINGS.settingsView.title} · ${STRINGS.appTitle}`;
     renderSettings(document.getElementById("settings-view"), schedule, { focusKey });
+  } else if (daysOpen()) {
+    showView("days");
+    viewEmpty = !schedule;
+    document.title = `${STRINGS.days.title} · ${STRINGS.appTitle}`;
+    renderDays(document.getElementById("days-view"), schedule, kyivParts(now()).date);
+  } else if (join) {
+    showView("join");
+    document.title = `${join.label} · ${join.cls.discipline}`;
+    renderJoin(document.getElementById("join-view"), {
+      cls: join.cls, label: join.label, button: joinLink(join.cls, join.url, "btn-join"),
+    });
+    window.scrollTo(0, 0);
   } else {
+    showView("main");
     render(); // links may have changed
     refreshStats(); // …and stats (import or clear in settings)
     window.scrollTo(0, 0);
+    maybeShowNews();
   }
 }
 
@@ -443,6 +510,12 @@ function boot() {
   // iOS Safari only applies :active (our press-in effect) when the page listens for touches.
   document.addEventListener("touchstart", () => {}, { passive: true });
   if (!debugAlarm) getAlarm = startAlarmWatch(() => render());
+  // A tapped push asks the open app to show a screen (see sw.js).
+  navigator.serviceWorker?.addEventListener("message", (event) => {
+    if (event.data?.view !== "join") return;
+    if (joinOpen()) route();
+    else location.hash = "#join";
+  });
 
   renderClock();
   route();

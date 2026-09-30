@@ -99,23 +99,19 @@ export const STRINGS = {
     none: ["Завтра пар немає — можна видихнути 😌", "Завтра вільний день 🙌"],
   },
 
-  // Opening a shared link: confirm before anything is saved.
-  shareImport: {
-    title: "Посилання від групи 🤝",
-    intro: "Ось що хтось із групи тобі надіслав. Вибери, що додати, — збережеться тільки на цьому пристрої.",
-    teacher: "Викладач",
-    pair: "Окрема пара",
-    isNew: "Нове",
-    replaces: "Замінить твоє",
-    yours: "Зараз у тебе:",
-    same: "Вже є",
-    add: (count) => `Додати (${count})`,
-    cancel: "Не зараз",
-    nothingNew: "У тебе вже є всі ці посилання 👌",
-    done: (count) => `Додано: ${count}`,
-    broken: "Це посилання пошкоджене або неповне. Попроси надіслати його ще раз.",
-    tooOld: "Цей браузер не може відкрити таке посилання. Спробуй у свіжішому Chrome чи Safari.",
-    back: "На головну",
+  // Days ahead (#days): everything the schedule knows after today.
+  days: {
+    title: "Наступні дні",
+    open: "Розклад на наступні дні",
+    tomorrow: "Завтра",
+    none: "Пар немає",
+    empty: "Далі розкладу поки немає.",
+    noSchedule: "Розклад ще не завантажено.",
+  },
+
+  // Opened from a reminder or an all-clear push (#join): one class, one button.
+  joinView: {
+    home: "На головну",
   },
 
   // Home card: this week's taps on «Приєднатися». Honest (a tap isn't attendance), never guilt:
@@ -141,25 +137,84 @@ export const STRINGS = {
   push: {
     reminderTitle: (duration, discipline) => `Через ${duration} — ${discipline} 🎓`,
     reminderBody: (type, teacher, start) => [type, teacher, `початок о ${start}`].filter(Boolean).join(" · "),
+    // A reminder that goes out while an alert is on.
+    reminderBodyAlert: (body) => `Зараз тривога · ${body}`,
     alertTitle: (region) => `Повітряна тривога · ${region}`,
     alertBody: "Пара на паузі. Бережи себе 🙏",
+    // The class hasn't started yet (it starts within 15 min).
+    alertBodySoon: (start) => `Початок пари о ${start} на паузі. Бережи себе 🙏`,
     clearTitle: "Відбій! Повертаємось на пару 🙌",
     clearBody: (duration) => (duration ? `Тривога тривала ${duration}` : "Пара продовжується"),
+    clearBodySoon: (start) => `Пара почнеться о ${start}`,
   },
 
   updatedAt: (date, time) => `Розклад оновлено ${date} о ${time}`,
   stale: "Розклад давно не оновлювався",
   loadError: "Не вдалося завантажити розклад",
 
-  // First launch
-  welcome: {
+  // First launch, or a link from the group: one page at a time, one button per page.
+  onboarding: {
+    next: "Продовжити",
+
+    // Page: links from the group (opened with #share=…). Nothing is saved before the tap.
+    linksTitle: (count) => `${count} на пари від групи`,
+    linksText: "Додам їх — і кнопка «Приєднатися» запрацює одразу. Вони лишаться тільки на цьому пристрої.",
+    linksReplace: (count) => `Оновлять твої: ${count}.`,
+    linksDetails: "Що саме",
+    linksReplaces: "оновить твоє",
+    linksAdd: "Додати й продовжити",
+    linksSkip: "Не додавати",
+    brokenTitle: "Посилання не відкрилось",
+    broken: "Воно пошкоджене або неповне. Попроси надіслати його ще раз.",
+    tooOld: "Цей браузер не може відкрити таке посилання. Спробуй у свіжішому Chrome чи Safari.",
+    storageBlocked: "Не вдалося зберегти: браузер блокує сховище.",
+
+    // Page: what the app does.
     hello: "Привіт! 👋",
-    intro: "Я підкажу, яка зараз пара, і дам знати, коли вона на паузі через тривогу.",
+    intro: "Я — «Пари». Ось чим допоможу:",
+    features: [
+      { icon: "videocam", title: "Пара перед очима", text: "Видно, що зараз і що далі. Заходиш одним дотиком." },
+      { icon: "warning", title: "Пауза на час тривоги", text: "Скажу, коли тривога і коли відбій." },
+      { icon: "notifications", title: "Нагадування", text: "Напишу за кілька хвилин до початку." },
+    ],
+
+    // Page: iPhone in a browser tab. Reminders only work from the home screen.
+    installTitle: "Додай «Пари» на головний екран",
+    installText: "Так я зможу нагадувати про пари, а відкриватимусь як звичайний застосунок.",
+    installTelegram: { icon: "open_in_browser", text: "Відкрий цю сторінку в Safari: у Telegram натисни ••• або значок компаса" },
+    installSteps: [
+      { icon: "ios_share", text: "Натисни «Поділитися» внизу Safari" },
+      { icon: "add_box", text: "Обери «На початковий екран»" },
+      { icon: "check_circle", text: "Відкрий «Пари» з головного екрана" },
+    ],
+    installHint: "Немає кнопки «Поділитися»? Спершу відкрий цю сторінку в Safari.",
+    installSkip: "Продовжити в браузері",
+
+    // Page: the name
     question: "Як до тебе звертатися?",
     hint: "Напиши так, як тобі приємно чути: «Артеме», «Олю». Це лишиться тільки на цьому пристрої.",
     placeholder: "Наприклад, Артеме",
-    next: "Далі",
+    nameNext: "Далі",
     skip: "Пропустити",
+
+    // Page: reminders
+    pushTitle: "Нагадувати про пари? 🔔",
+    pushText: "Напишу за 5 хв до початку й дам знати про тривогу та відбій під час пари.",
+    pushEnable: "Увімкнути нагадування",
+    pushLater: "Не зараз",
+  },
+
+  // «Що нового»: shown once to students who already use the app. Bump `version` when the
+  // items change. New students never see it (they've just been shown everything).
+  whatsNew: {
+    version: 1,
+    title: "Що нового",
+    items: [
+      { icon: "calendar_month", title: "Наступні дні", text: "Натисни на «Завтра» — і побачиш розклад наперед." },
+      { icon: "videocam", title: "Зі сповіщення — одразу на пару", text: "Нагадування й відбій відкривають кнопку «Приєднатися»." },
+      { icon: "group", title: "Простіше для групи", text: "Посилання від одногрупників додаються одним дотиком." },
+    ],
+    button: "Продовжити",
   },
 
   settingsView: {
