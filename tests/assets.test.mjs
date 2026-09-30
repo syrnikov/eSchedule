@@ -86,7 +86,12 @@ test("every icon used in js/ is in the font subset, which is sorted", async () =
     if (statusIcons) for (const m of statusIcons[1].matchAll(/"([a-z_]+)"/g)) used.add(m[1]);
   }
   used.add("settings"); // written directly in index.html
-  for (const step of STRINGS.settingsView.iosSteps) used.add(step.icon); // icon(step.icon) in settings.js
+  // Icons named in strings.js and drawn with icon(item.icon).
+  const O = STRINGS.onboarding;
+  const named = [
+    ...STRINGS.settingsView.iosSteps, ...O.features, ...O.installSteps, O.installTelegram, ...STRINGS.whatsNew.items,
+  ];
+  for (const item of named) used.add(item.icon);
   for (const name of used) assert.ok(subset.includes(name), `missing from ICONS in scripts/icons.mjs: ${name}`);
 });
 

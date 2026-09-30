@@ -120,7 +120,7 @@ body {
 
 /* Controls behave like app controls: a long press doesn't select their text or pop up
    the link preview. Content text stays selectable. */
-.btn, .btn-join, .no-link, .icon-btn, .switch-row, .segment, .type-chip, .share-row {
+.btn, .btn-join, .no-link, .icon-btn, .switch-row, .segment, .type-chip, .share-row, .tomorrow {
   -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
@@ -488,7 +488,20 @@ a { color: inherit; }
   color: var(--live);
 }
 
-/* ---------- Tomorrow ---------- */
+/* ---------- Tomorrow (the whole card opens the days ahead) ---------- */
+.tomorrow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: -16px -20px;
+  padding: 16px 20px;
+  border-radius: var(--radius);
+  text-decoration: none;
+  transition: transform 0.15s ease;
+}
+.tomorrow:active { transform: scale(0.99); }
+.tomorrow .icon { color: var(--muted); }
 .tomorrow-line { font-weight: 500; line-height: 1.35; }
 .tomorrow-sub {
   margin-top: 2px;
@@ -616,8 +629,7 @@ a { color: inherit; }
   color: var(--muted);
 }
 
-.field input:not([type="checkbox"]):not([type="radio"]),
-.welcome-form input {
+.field input:not([type="checkbox"]):not([type="radio"]) {
   display: block;
   width: 100%;
   margin-top: 10px;
@@ -630,10 +642,8 @@ a { color: inherit; }
   font: inherit;
   font-size: 16px; /* 16px+ stops iOS from zooming in on focus */
 }
-.field input::placeholder,
-.welcome-form input::placeholder { color: var(--muted); opacity: 0.7; }
-.field input:focus-visible,
-.welcome-form input:focus-visible { outline: 3px solid var(--text); outline-offset: 1px; }
+.field input::placeholder { color: var(--muted); opacity: 0.7; }
+.field input:focus-visible { outline: 3px solid var(--text); outline-offset: 1px; }
 .field input[aria-invalid="true"] { border-color: var(--alarm); border-width: 2px; }
 
 .field-msg {
@@ -847,105 +857,174 @@ a { color: inherit; }
   font-size: 16px;
 }
 
-/* Import screen (#share=…) */
-.share { padding: 24px 20px 20px; }
-.share-title { font-size: 26px; font-weight: 700; line-height: 1.2; }
-.share-title:focus { outline: none; }
-.share-intro { margin-top: 8px; color: var(--muted); }
-.share-intro.is-error { color: var(--alarm); font-weight: 500; }
-.share-intro.is-saved { color: var(--live); font-weight: 500; }
-.share-list { list-style: none; padding: 0; margin: 16px 0 0; }
+/* ---------- Onboarding: one page at a time, buttons pinned to the bottom ---------- */
+#onboarding-view { min-height: calc(100dvh - 48px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
+.onb {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin: 0;
+  animation: rise 0.4s ease both;
+}
+.onb-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 24px 4px 0;
+}
+.onb-badge {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  margin-bottom: 20px;
+  border-radius: 50%;
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+.onb-badge--good { color: var(--live); }
+.onb-title {
+  font-size: clamp(26px, 8vw, 32px);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+}
+.onb-title:focus { outline: none; }
+.onb-text {
+  margin-top: 10px;
+  font-size: 17px;
+  color: var(--muted);
+}
+.onb-main > .card,
+.onb-main > .onb-details { margin-top: 24px; }
+.onb-hint {
+  margin-top: 12px;
+  padding: 0 4px;
+  font-size: 14px;
+  color: var(--muted);
+}
+.onb-steps { margin-top: 0; }
+.onb-actions {
+  display: grid;
+  gap: 4px;
+}
+.onb-form input {
+  display: block;
+  width: 100%;
+  margin-top: 24px;
+  min-height: 52px;
+  padding: 0 16px;
+  border: 1px solid var(--input-border);
+  border-radius: 14px;
+  background: var(--card);
+  color: var(--text);
+  font: inherit;
+  font-size: 17px; /* 16px+ stops iOS from zooming in on focus */
+}
+.onb-form input::placeholder { color: var(--muted); opacity: 0.7; }
+.onb-form input:focus-visible { outline: 3px solid var(--text); outline-offset: 1px; }
+
+/* Links from the group: what's inside, collapsed by default */
+.share-list { list-style: none; padding: 0; margin: 0; }
 .share-item { border-top: 1px solid var(--line); }
-.share-item:first-child { border-top: 0; }
 .share-row {
   display: grid;
   grid-template-columns: 24px 1fr;
   gap: 12px;
-  align-items: start;
-  padding: 14px 0;
+  align-items: center;
+  padding: 10px 0;
   min-height: 44px;
   cursor: pointer;
 }
 .share-check {
   width: 22px;
   height: 22px;
-  margin: 2px 0 0;
+  margin: 0;
   accent-color: var(--live);
   cursor: pointer;
 }
-.share-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.share-kind {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: var(--muted);
-}
+.share-text { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .share-name { font-weight: 500; line-height: 1.3; overflow-wrap: anywhere; }
-.share-url {
-  font-size: 13px;
-  color: var(--muted);
-  overflow-wrap: anywhere;
-}
-
 .share-badge {
+  flex-shrink: 0;
   margin-left: auto;
   padding: 2px 8px;
   border-radius: 999px;
   font-size: 12px;
   font-weight: 500;
-  background: var(--neutral-soft);
-  color: var(--muted);
-}
-.share-badge--new { background: var(--live-soft); color: var(--live); }
-.share-badge--replace { background: var(--soon-soft); color: var(--soon); }
-.share-item.is-same .share-row { cursor: default; }
-.share-actions {
-  display: grid;
-  gap: 4px;
-  margin-top: 16px;
+  background: var(--soon-soft);
+  color: var(--soon);
 }
 
-/* ---------- Welcome (first launch) ---------- */
-#welcome-view { min-height: calc(100dvh - 48px); justify-content: center; }
-.welcome {
-  padding: 28px 24px 20px;
-  animation: rise 0.4s ease both;
+/* Icon + title + one line (welcome page, «Що нового») */
+.features {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 18px;
 }
-.welcome-hello {
-  font-size: 32px;
+.features li {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 14px;
+  align-items: center;
+}
+.feature-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--accent-1-soft);
+  color: var(--accent-1);
+}
+.feature-title { font-weight: 700; line-height: 1.3; }
+.feature-text { margin-top: 2px; font-size: 14px; color: var(--muted); }
+
+/* ---------- «Що нового» sheet ---------- */
+.news {
+  width: min(100% - 32px, 440px);
+  max-height: calc(100dvh - 48px);
+  padding: 28px 24px 20px;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--text);
+  box-shadow: var(--shadow);
+  overflow-y: auto;
+}
+.news[open] { animation: rise 0.3s ease both; }
+.news::backdrop { background: rgba(8, 10, 14, 0.45); }
+.news-title {
+  margin-bottom: 24px;
+  font-size: 28px;
   font-weight: 700;
   line-height: 1.15;
-  letter-spacing: -0.01em;
+  text-align: center;
 }
-.welcome-hello:focus { outline: none; }
-.welcome-intro {
-  margin-top: 10px;
-  font-size: 17px;
-  color: var(--muted);
-}
-.welcome-form { margin-top: 28px; }
-.welcome-question {
-  display: block;
-  font-size: 20px;
-  font-weight: 700;
-  line-height: 1.25;
-}
-.welcome-form .field-context { margin-top: 6px; }
-.welcome-actions {
-  display: grid;
-  gap: 4px;
-  margin-top: 20px;
-}
-@keyframes rise {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: none; }
-}
+.news .btn { margin-top: 28px; }
 
-/* ---------- Motion ---------- */
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    transition: none !important;
-    animation: none !important;
-  }
+/* ---------- Days ahead (#days) ---------- */
+.day-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 12px;
 }
+.day-name { font-size: 17px; font-weight: 700; line-height: 1.3; }
+.day-name::first-letter { text-transform: uppercase; }
+.day-count { flex-shrink: 0; font-size: 14px; color: var(--muted); }
+.day-none { color: var(--muted); }
+.day-head:has(+ .day-none) { margin-bottom: 4px; }
+
+/* ---------- Join (#join): opened from a push ---------- */
+#join-view { min-height: calc(100dvh - 48px); justify-content: center; }
+.join-card { padding: 24px 20px 20px; animation: rise 0.3s ease both; }
+.join-card .class-title:focus { outline: none; }
+.join-label { font-weight: 700; color: var(--live); }
+#join-view .btn--text { text-decoration: none; }
+

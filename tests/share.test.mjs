@@ -5,6 +5,7 @@ import { deflateRawSync } from "node:zlib";
 import {
   encodeShare, decodeShare, validateShared, diffShare, isLinkKey, describeKey, shareUrl,
   SHARE_PREFIX, MAX_ENTRIES, MAX_FRAGMENT_LENGTH,
+  shareId, rememberShare,
 } from "../js/share.js";
 import { exportJson, parseImport } from "../js/links.js";
 
@@ -101,4 +102,21 @@ test("diff: new, replace (keeps yours visible), same; teachers first", () => {
 
 test("the JSON export/import format is unchanged", () => {
   assert.deepEqual(parseImport(exportJson(LINKS)), LINKS);
+});
+
+test("a share is recognised again by a short id, not by its links", async () => {
+  const a = await encodeShare({ "@Дядюра К. О.": "https://zoom.us/j/1?pwd=secret" });
+  const b = await encodeShare({ "@Дядюра К. О.": "https://zoom.us/j/2?pwd=secret" });
+  assert.equal(shareId(a), shareId(a));
+  assert.notEqual(shareId(a), shareId(b));
+  assert.ok(shareId(a).length < 20);
+  assert.doesNotMatch(shareId(a), /secret|zoom/);
+});
+
+test("rememberShare keeps the newest ids, without duplicates", () => {
+  assert.deepEqual(rememberShare(["a", "b"], "a"), ["b", "a"]);
+  const many = Array.from({ length: 30 }, (_, i) => `id${i}`);
+  const kept = many.reduce(rememberShare, []);
+  assert.equal(kept.length, 20);
+  assert.equal(kept.at(-1), "id29");
 });

@@ -252,7 +252,8 @@ describe("cron reminders", () => {
     assert.equal(init.headers["Content-Encoding"], "aes128gcm");
     assert.equal(init.headers.TTL, "300");
     const msg = await b.decrypt(new Uint8Array(init.body));
-    assert.deepEqual(Object.keys(msg).sort(), ["body", "tag", "title"]);
+    assert.deepEqual(Object.keys(msg).sort(), ["body", "tag", "title", "view"]);
+    assert.equal(msg.view, "join"); // tapping it opens the «Приєднатися» screen
     assert.equal(msg.title.replace(/ /g, " "), "Через 5 хв — Іноземна мова 🎓");
     assert.equal(msg.body.replace(/\u00a0/g, " "), "Практичні · Насакіна С. В. · початок о 08:15");
     assert.doesNotMatch(JSON.stringify(msg), /https?:/);
@@ -346,6 +347,45 @@ describe("cron alert pushes (opt-in)", () => {
     assert.equal(msgs[1].title, "Відбій! Повертаємось на пару 🙌");
     assert.equal(msgs[1].body.replace(/ /g, " "), "Тривога тривала 23 хв");
     assert.ok(w.net.pushes.every((p) => p.url === opted.endpoint));
+    // The all-clear leads back to class; the alert itself doesn't (shelter first).
+    assert.equal(msgs[0].view, undefined);
+    assert.equal(msgs[1].view, "join");
+  });
+
+  test("start and end just before a class (within 15 min) count too", async () => {
+    const w = await world();
+    const b = await fakeBrowser(1);
+    await subscribe(w, b, { reminders: false, alerts: true });
+    const messages = async () => Promise.all(w.net.pushes.map((p) => b.decrypt(new Uint8Array(p.init.body))));
+
+    await w.cron("2026-09-28T07:40"); // first reading
+    w.net.alert = true;
+    await w.cron("2026-09-28T07:59"); // 16 min before the 08:15 class: too early to matter
+    assert.equal(w.net.pushes.length, 0);
+    await w.cron("2026-09-28T08:00"); // now it does, and the change is still fresh
+    w.net.alert = false;
+    await w.cron("2026-09-28T08:07");
+
+    const msgs = (await messages()).map((m) => ({ ...m, body: m.body.replace(/\u00a0/g, " ") }));
+    assert.equal(msgs.length, 2);
+    assert.equal(msgs[0].body, "Початок пари о 08:15 на паузі. Бережи себе 🙏");
+    assert.equal(msgs[0].view, undefined);
+    assert.equal(msgs[1].title, "Відбій! Повертаємось на пару 🙌");
+    assert.equal(msgs[1].body, "Пара почнеться о 08:15");
+    assert.equal(msgs[1].view, "join");
+  });
+
+  test("a reminder sent during an alert says so, and opens the home screen", async () => {
+    const w = await world();
+    const b = await fakeBrowser(1);
+    await subscribe(w, b); // reminders only
+    await w.cron("2026-09-28T07:00");
+    w.net.alert = true;
+    await w.cron("2026-09-28T08:10");
+    assert.equal(w.net.pushes.length, 1);
+    const msg = await b.decrypt(new Uint8Array(w.net.pushes[0].init.body));
+    assert.equal(msg.body.replace(/\u00a0/g, " "), "Зараз тривога · Практичні · Насакіна С. В. · початок о 08:15");
+    assert.equal(msg.view, undefined);
   });
 
   test("an alert outside class time sends nothing", async () => {

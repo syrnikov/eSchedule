@@ -49,11 +49,14 @@ export function keyBytes(b64url) {
 
 // --- Browser side ---
 
+// Opened from the home screen (installed), not in a browser tab.
+export const isStandalone = () =>
+  matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+
 export function pushSupport() {
-  const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
   return detectSupport({
     ios: isIos(navigator),
-    standalone,
+    standalone: isStandalone(),
     hasPush: "serviceWorker" in navigator && "PushManager" in window && "Notification" in window,
     permission: "Notification" in window ? Notification.permission : "default",
   });
