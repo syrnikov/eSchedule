@@ -5,7 +5,8 @@ import { readFile, readdir } from "node:fs/promises";
 import { STRINGS } from "../js/strings.js";
 import { ICONS, FONT_FILE, MANIFEST_FILE } from "../scripts/icons.mjs";
 
-const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
+// Line endings are normalised: on Windows git may check the files out with CRLF.
+const read = async (path) => (await readFile(new URL(`../${path}`, import.meta.url), "utf8")).replace(/\r\n/g, "\n");
 const css = await read("css/styles.css");
 const html = await read("index.html");
 
