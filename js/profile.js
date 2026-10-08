@@ -12,6 +12,9 @@ export function cleanName(value) {
   return value.replace(/\s+/g, " ").trim().slice(0, MAX_NAME_LENGTH).trim();
 }
 
+// "Артеме" -> "А" for the avatar; "" when there's no name.
+export const initialOf = (name) => (cleanName(name).match(/\p{L}|\p{N}/u)?.[0] ?? "").toLocaleUpperCase("uk");
+
 // «Що нового» is for students who were already using the app when `version` came out.
 export const shouldShowNews = (profile, version) => profile.onboarded && profile.newsSeen < version;
 

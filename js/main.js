@@ -20,6 +20,8 @@ import { renderDays } from "./days-view.js";
 import { renderJoin, joinTarget } from "./join-view.js";
 import { renderTasks, deadlineLines } from "./tasks-view.js";
 import { renderTeachers } from "./teachers-view.js";
+import { renderProfile, avatar } from "./profile-view.js";
+import { renderStatsView } from "./stats-view.js";
 import { renderTabbar, tabScroll } from "./tabbar.js";
 import { loadTasks, dueSoon, dueOn } from "./tasks.js";
 import { SHARE_PREFIX, isShareSeen, markShareSeen } from "./share.js";
@@ -220,11 +222,12 @@ function renderStats(status = lastStatus) {
   const m = week.typicalMinutes;
   // Early or on time gets a line; a late typical time gets none (no guilt, ever).
   const sub = m <= -1 ? T.early(formatDuration(-m)) : m < 1 ? T.onTime : "";
-  card.replaceChildren(
+  card.replaceChildren(el("a", { class: "stats-link", href: "#stats", "aria-label": `${week.classes} ${T.line(unit)}. ${T.open}` },
     el("p", { class: "stats-number" }, String(week.classes)),
     el("div", {},
       el("p", { class: "stats-line" }, T.line(unit)),
-      sub && el("p", { class: "stats-sub" }, sub)));
+      sub && el("p", { class: "stats-sub" }, sub)),
+    icon("chevron_right")));
 }
 
 // "2 завдання найближчим часом": only when something is due within a week (or already late).
@@ -315,10 +318,20 @@ const setText = (id, text) => {
   node.hidden = !text;
 };
 
+// The avatar (top left): rebuilt only when the name changes.
+let avatarName = null;
+function renderAvatar(name) {
+  if (name === avatarName) return;
+  avatarName = name;
+  document.getElementById("avatar-btn").replaceChildren(avatar(name));
+}
+
 function renderHeader(status) {
   const nowMin = kyivParts(now()).minutes;
   const todays = schedule?.classes.filter((c) => c.date === status.today) ?? [];
-  setText("greeting", greeting(nowMin, loadProfile().name, status.today));
+  const { name } = loadProfile();
+  renderAvatar(name);
+  setText("greeting", greeting(nowMin, name, status.today));
   setText("day-summary", daySummary(status, todays, nowMin));
 }
 
@@ -373,11 +386,13 @@ async function refreshSchedule() {
 //   #settings, #settings:<link key>   settings
 //   #days                             the days ahead
 //   #tasks, #teachers                 the other two tabs
+//   #profile                          the student's own things (avatar)
+//   #stats                            «Статистика»
 //   #join                             one class, one button (from a push)
 //   #share=…                          links from a groupmate (goes through onboarding)
 //   anything else                     the main screen
 // On first launch the main screen waits behind the onboarding pages.
-const VIEWS = ["main", "tasks", "teachers", "settings", "days", "join", "onboarding"];
+const VIEWS = ["main", "tasks", "teachers", "settings", "profile", "stats", "days", "join", "onboarding"];
 let currentView = "main";
 let viewEmpty = false; // a screen that needs the schedule opened before it arrived
 let onboardingActive = false;
@@ -387,6 +402,8 @@ let handledShare = null; // same, for the share
 let newsShown = false;
 const settingsOpen = () => location.hash.startsWith("#settings");
 const daysOpen = () => location.hash === "#days";
+const profileOpen = () => location.hash === "#profile";
+const statsOpen = () => location.hash === "#stats";
 const tasksOpen = () => location.hash === "#tasks";
 const teachersOpen = () => location.hash === "#teachers";
 const joinOpen = () => location.hash === "#join";
@@ -483,6 +500,14 @@ function route() {
     viewEmpty = !schedule;
     document.title = `${STRINGS.settingsView.title} · ${STRINGS.appTitle}`;
     renderSettings(document.getElementById("settings-view"), schedule, { focusKey });
+  } else if (profileOpen()) {
+    showView("profile");
+    document.title = `${STRINGS.profileView.title} · ${STRINGS.appTitle}`;
+    renderProfile(document.getElementById("profile-view"));
+  } else if (statsOpen()) {
+    showView("stats");
+    document.title = `${STRINGS.statsView.title} · ${STRINGS.appTitle}`;
+    renderStatsView(document.getElementById("stats-view"), { today: kyivParts(now()).date });
   } else if (daysOpen()) {
     showView("days");
     viewEmpty = !schedule;
@@ -538,6 +563,8 @@ function boot() {
   document.title = STRINGS.appTitle;
   document.getElementById("app-heading").textContent = STRINGS.appTitle;
   document.getElementById("settings-btn").setAttribute("aria-label", STRINGS.settings);
+  document.getElementById("stats-btn").setAttribute("aria-label", STRINGS.header.stats);
+  document.getElementById("avatar-btn").setAttribute("aria-label", STRINGS.header.profile);
   watchIconFont();
   registerServiceWorker();
   refreshStats();

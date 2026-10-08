@@ -64,20 +64,69 @@ function median(values) {
   return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
 }
 
-// This week (Mon–Sun, Kyiv): how many distinct classes had a tap, and the typical first-tap
-// time. null until there's enough to say something (MIN_CLASSES_FOR_CARD).
-export function weekSummary(joins, today) {
+export const PERIODS = ["week", "month", "all"];
+
+// { from, to } (Kyiv dates, inclusive) for the stats screen's period switch.
+//   week   Monday–Sunday of this week
+//   month  the 1st to the last day of this month
+//   all    the first record (or today) to today
+export function periodRange(period, today, joins = []) {
+  if (period === "month") {
+    const from = `${today.slice(0, 8)}01`;
+    const [y, m] = today.split("-").map(Number);
+    const last = new Date(Date.UTC(y, m, 0)).getUTCDate(); // day 0 of next month
+    return { from, to: `${today.slice(0, 8)}${String(last).padStart(2, "0")}` };
+  }
+  if (period === "all") {
+    const first = joins.reduce((min, j) => (j.date < min ? j.date : min), today);
+    return { from: first, to: today };
+  }
   const from = weekStart(today);
-  const to = addDays(from, 6);
-  const firstTap = new Map(); // one entry per class, its earliest tap
+  return { from, to: addDays(from, 6) };
+}
+
+const byCount = (key) => (a, b) => b.count - a.count || a[key].localeCompare(b[key], "uk");
+
+// Everything the stats screen shows for a period. A class counts once (its earliest tap),
+// keyed by date + start + subject.
+export function summarize(joins, { from, to }) {
+  const classes = new Map(); // key -> earliest tap
   for (const j of joins) {
     if (j.date < from || j.date > to) continue;
     const key = `${j.date}|${j.start}|${j.discipline}`;
-    const prev = firstTap.get(key);
-    if (prev === undefined || j.minutes < prev) firstTap.set(key, j.minutes);
+    const prev = classes.get(key);
+    if (!prev || j.minutes < prev.minutes) classes.set(key, j);
   }
-  if (firstTap.size < MIN_CLASSES_FOR_CARD) return null;
-  return { classes: firstTap.size, typicalMinutes: Math.round(median([...firstTap.values()])) };
+  const list = [...classes.values()];
+
+  const subjects = new Map();
+  const teachers = new Map();
+  for (const j of list) {
+    const s = subjects.get(j.discipline) ?? { discipline: j.discipline, type: j.type, count: 0 };
+    s.count += 1;
+    subjects.set(j.discipline, s);
+    if (j.teacher) {
+      const t = teachers.get(j.teacher) ?? { teacher: j.teacher, count: 0 };
+      t.count += 1;
+      teachers.set(j.teacher, t);
+    }
+  }
+
+  return {
+    classes: list.length,
+    typicalMinutes: list.length ? Math.round(median(list.map((j) => j.minutes))) : null,
+    subjects: subjects.size,
+    days: new Set(list.map((j) => j.date)).size,
+    bySubject: [...subjects.values()].sort(byCount("discipline")),
+    byTeacher: [...teachers.values()].sort(byCount("teacher")),
+  };
+}
+
+// This week (Mon–Sun, Kyiv): how many distinct classes had a tap, and the typical first-tap
+// time. null until there's enough to say something (MIN_CLASSES_FOR_CARD).
+export function weekSummary(joins, today) {
+  const { classes, typicalMinutes } = summarize(joins, periodRange("week", today));
+  return classes < MIN_CLASSES_FOR_CARD ? null : { classes, typicalMinutes };
 }
 
 // --- IndexedDB (browser only). Every call degrades to "no stats" if storage is unavailable. ---
