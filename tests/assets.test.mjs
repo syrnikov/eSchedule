@@ -86,7 +86,7 @@ test("every icon used in js/ is in the font subset, which is sorted", async () =
     const statusIcons = src.match(/const STATUS_ICONS = \{([\s\S]*?)\};/);
     if (statusIcons) for (const m of statusIcons[1].matchAll(/"([a-z_]+)"/g)) used.add(m[1]);
   }
-  used.add("settings"); // written directly in index.html
+  used.add("settings").add("insert_chart"); // written directly in index.html
   // Icons named in strings.js and drawn with icon(item.icon).
   const O = STRINGS.onboarding;
   const named = [

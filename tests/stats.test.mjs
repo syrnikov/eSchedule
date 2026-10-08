@@ -2,8 +2,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  makeJoin, sanitizeJoins, mergeJoins, weekStart, weekSummary, MAX_JOINS, MIN_CLASSES_FOR_CARD,
+  makeJoin, sanitizeJoins, mergeJoins, weekStart, weekSummary, periodRange, summarize, MAX_JOINS, MIN_CLASSES_FOR_CARD,
 } from "../js/stats.js";
+import { initialOf } from "../js/profile.js";
 import { buildBackup, parseBackup, BACKUP_VERSION } from "../js/backup.js";
 import { exportJson } from "../js/links.js";
 import { kyivLocalToDate } from "../js/format.js";
@@ -126,4 +127,45 @@ test("backup: junk is rejected, bad parts are dropped", () => {
   const onlyEmail = parseBackup(JSON.stringify({ version: 3, links: {}, contacts: { "@A": "a@x.ua", "@B": "nope" } }));
   assert.deepEqual(onlyEmail.contacts, { "@A": "a@x.ua" });
   assert.throws(() => parseBackup(JSON.stringify({ version: 3, links: {}, tasks: [{ title: "" }] })));
+});
+
+// --- Stats screen ---
+
+test("periodRange: week across a month end, month lengths, all time", () => {
+  assert.deepEqual(periodRange("week", "2026-10-01"), { from: "2026-09-28", to: "2026-10-04" });
+  assert.deepEqual(periodRange("month", "2026-10-15"), { from: "2026-10-01", to: "2026-10-31" });
+  assert.deepEqual(periodRange("month", "2026-09-30"), { from: "2026-09-01", to: "2026-09-30" });
+  assert.deepEqual(periodRange("month", "2027-02-10"), { from: "2027-02-01", to: "2027-02-28" });
+  assert.deepEqual(periodRange("month", "2028-02-10"), { from: "2028-02-01", to: "2028-02-29" });
+  const joins = [tap("2026-09-14", "08:15", "2026-09-14T08:10"), tap("2026-09-02", "08:15", "2026-09-02T08:10")];
+  assert.deepEqual(periodRange("all", "2026-10-01", joins), { from: "2026-09-02", to: "2026-10-01" });
+  assert.deepEqual(periodRange("all", "2026-10-01", []), { from: "2026-10-01", to: "2026-10-01" });
+  assert.deepEqual(periodRange("nonsense", "2026-10-01"), periodRange("week", "2026-10-01"));
+});
+
+test("summarize: one count per class (earliest tap), sorted lists, nothing outside the period", () => {
+  const joins = [
+    tap("2026-09-28", "08:15", "2026-09-28T08:20", "Трактори"),
+    tap("2026-09-28", "08:15", "2026-09-28T08:12", "Трактори"), // same class, earlier tap wins
+    tap("2026-09-29", "08:15", "2026-09-29T08:10", "Трактори"),
+    tap("2026-09-29", "09:45", "2026-09-29T09:44", "Економіка"),
+    tap("2026-10-05", "08:15", "2026-10-05T08:00", "Хімія"), // next week
+  ];
+  const s = summarize(joins, periodRange("week", "2026-10-01"));
+  assert.equal(s.classes, 3);
+  assert.equal(s.subjects, 2);
+  assert.equal(s.days, 2);
+  assert.equal(s.typicalMinutes, -3); // median of -3, -5, -1
+  assert.deepEqual(s.bySubject.map((x) => [x.discipline, x.count]), [["Трактори", 2], ["Економіка", 1]]);
+  assert.deepEqual(s.byTeacher, [{ teacher: "Насакіна С. В.", count: 3 }]);
+  const empty = summarize(joins, { from: "2026-08-01", to: "2026-08-31" });
+  assert.deepEqual([empty.classes, empty.typicalMinutes, empty.bySubject.length], [0, null, 0]);
+});
+
+test("initialOf: the first letter for the avatar", () => {
+  assert.equal(initialOf("артеме"), "А");
+  assert.equal(initialOf("  Оля "), "О");
+  assert.equal(initialOf("«Їжачок»"), "Ї");
+  assert.equal(initialOf(""), "");
+  assert.equal(initialOf(null), "");
 });

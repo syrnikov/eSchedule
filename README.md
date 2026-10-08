@@ -52,9 +52,13 @@ Worker cron (every minute) ──> schedule.json from Pages (cached 30 min in KV
 - «Що нового» is a sheet shown once per `STRINGS.whatsNew.version` to students who already use
   the app.
 - Each «Приєднатися» tap is logged in IndexedDB on the device (time, class, minutes from start,
-  alert on/off). The home card says how many classes you joined through the app this week; a
-  tap isn't attendance, so it never says "attendance", shows percentages, or mentions missed
-  classes. Settings → Статистика clears it; the backup file includes it.
+  alert on/off). The home card says how many classes you joined through the app this week and
+  opens «Статистика» (`#stats`, also the chart in the header): the count for a week, month or all
+  time, the typical join time, and a list by subject or teacher with bars relative to the top
+  one. A tap isn't attendance, so it never says "attendance", shows percentages, or mentions
+  missed classes. The stats screen clears it; the backup file includes it.
+- The header row: the avatar (the name's initial) opens «Профіль» (`#profile`: name, backup);
+  the gear opens app settings (reminders, links, sharing); the chart opens «Статистика».
 - Push messages carry only subject, type, teacher and start time. Tapping one opens the app,
   where the link is: a reminder or an all-clear opens `#join` (that class and one big
   «Приєднатися»), an alert opens the home screen. Alert and all-clear pushes also go out when a
@@ -68,7 +72,8 @@ Worker cron (every minute) ──> schedule.json from Pages (cached 30 min in KV
 | `js/main.js` | Boot, rendering, render loop, routing between main screen and settings |
 | `js/status.js` | `computeStatus(now, schedule, alarm)`, a pure function; the core logic |
 | `js/alarm.js` | Polls the Worker and tracks alarm state |
-| `js/settings.js`, `js/links.js` | Settings screen; link storage, import/export |
+| `js/settings.js`, `js/links.js` | App settings (reminders, links, sharing); link storage, import/export |
+| `js/profile-view.js`, `js/stats-view.js` | «Профіль» (name, backup) and the avatar; «Статистика» |
 | `js/voice.js` | Greeting, day summary, tomorrow’s tone, subject accent colour (pure) |
 | `js/profile.js`, `js/onboarding.js` | The name to greet you by and the last «Що нового» seen (device only); first-launch pages, including links from the group |
 | `js/tabbar.js` | The floating tab bar (`#`, `#tasks`, `#teachers`); tabs replace the history entry |
@@ -82,7 +87,7 @@ Worker cron (every minute) ──> schedule.json from Pages (cached 30 min in KV
 | `worker/` | Cloudflare Worker and `wrangler.toml`: alarm proxy (`worker.js`), push API + cron (`push.js`), Web Push crypto (`webpush.js`), D1 schema (`migrations/`) |
 | `js/share.js` | «Поділитися з групою»: links (and teachers' emails) in the URL #fragment, and which shares were already offered |
 | `js/push.js`, `sw.js` | Browser side of push: support detection, subscribe, service worker |
-| `js/stats.js`, `js/backup.js` | Local «Приєднатися» taps (IndexedDB) and the weekly card; backup file (v3 = links + stats + emails + tasks; v2 and v1 still import) |
+| `js/stats.js`, `js/backup.js` | Local «Приєднатися» taps (IndexedDB), periods and summaries (pure); backup file (v3 = links + stats + emails + tasks; v2 and v1 still import) |
 | `.github/workflows/scrape.yml` | Scheduled scraper |
 | `tests/` | `node:test` tests |
 

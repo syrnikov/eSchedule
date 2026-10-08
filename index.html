@@ -27,14 +27,23 @@
   <main class="app">
     <div class="view" id="main-view">
       <header class="top">
+        <!-- Avatar → profile; gear → app settings; chart → stats (labels set in main.js) -->
+        <div class="top-bar">
+          <a class="avatar-btn" id="avatar-btn" href="#profile"></a>
+          <div class="top-actions">
+            <a class="glyph-btn" id="settings-btn" href="#settings">
+              <span class="icon" aria-hidden="true">settings</span>
+            </a>
+            <a class="glyph-btn" id="stats-btn" href="#stats">
+              <span class="icon" aria-hidden="true">insert_chart</span>
+            </a>
+          </div>
+        </div>
         <div class="hello">
           <p class="date" id="date"></p>
           <p class="greeting" id="greeting"></p>
           <p class="day-summary" id="day-summary"></p>
         </div>
-        <a class="icon-btn" id="settings-btn" href="#settings">
-          <span class="icon" aria-hidden="true">settings</span>
-        </a>
       </header>
 
       <h1 class="sr-only" id="app-heading"></h1>
@@ -52,6 +61,8 @@
     <div class="view" id="tasks-view" hidden></div>
     <div class="view" id="teachers-view" hidden></div>
     <div class="view" id="settings-view" hidden></div>
+    <div class="view" id="profile-view" hidden></div>
+    <div class="view" id="stats-view" hidden></div>
     <div class="view" id="days-view" hidden></div>
     <div class="view" id="join-view" hidden></div>
     <div class="view" id="onboarding-view" hidden></div>

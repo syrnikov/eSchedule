@@ -206,6 +206,34 @@ export const STRINGS = {
     line: (unit) => `${unit} цього тижня через «Приєднатися» 🎓`,
     early: (duration) => `Зазвичай заходиш за ${duration} до початку`,
     onTime: "Зазвичай заходиш хвилина в хвилину",
+    open: "Відкрити статистику",
+  },
+
+  // Home header (top row): avatar → profile, gear → app settings, chart → stats.
+  header: {
+    profile: "Профіль",
+    stats: "Статистика",
+  },
+
+  // «Статистика» (#stats): the same honesty rules as the home card. Counts only, no
+  // percentages, nothing about missed classes.
+  statsView: {
+    title: "Статистика",
+    periodLabel: "Період",
+    periods: { week: "Тиждень", month: "Місяць", all: "Увесь час" },
+    range: (from, to) => `${from} – ${to}`,
+    since: (from) => `з ${from}`,
+    heroLabel: "Через «Приєднатися»",
+    groupLabel: "Показати за",
+    groupings: { subjects: "Предмети", teachers: "Викладачі" },
+    empty: "Тут з’являться пари, на які ти заходиш через «Приєднатися».",
+    emptyPeriod: "За цей період поки нічого. Спробуй інший 🙂",
+    dataGroup: "Твої дані",
+  },
+
+  // «Профіль» (#profile): the student's own things. App settings stay behind the gear.
+  profileView: {
+    title: "Профіль",
   },
 
   // Home card offering reminders (shown once, in context).
@@ -296,12 +324,12 @@ export const STRINGS = {
   // «Що нового»: shown once to students who already use the app. Bump `version` when the
   // items change. New students never see it (they've just been shown everything).
   whatsNew: {
-    version: 2,
+    version: 3,
     title: "Що нового",
     items: [
-      { icon: "assignment", title: "Завдання", text: "Записуй, що здати й до якого дня. Те, що скоро, видно на головному екрані." },
-      { icon: "contact_mail", title: "Викладачі", text: "Додай email викладача — і лист з темою пари пишеться одним дотиком." },
-      { icon: "group", title: "Для групи", text: "«Поділитися з групою» тепер передає й email-адреси." },
+      { icon: "insert_chart", title: "Статистика", text: "Пари через «Приєднатися» за тиждень, місяць чи весь час — по предметах і викладачах." },
+      { icon: "person", title: "Профіль", text: "Ім’я та резервна копія — під аватаркою вгорі. Налаштування застосунку — під шестернею." },
+      { icon: "assignment", title: "Завдання й викладачі", text: "Нотатки до завдань, і лист викладачу одним дотиком." },
     ],
     button: "Продовжити",
   },
@@ -411,6 +439,8 @@ export const STRINGS = {
     tasks: { one: "завдання", few: "завдання", many: "завдань" },
     emails: { one: "email-адреса", few: "email-адреси", many: "email-адрес" },
     teachers: { one: "викладача", few: "викладачів", many: "викладачів" },
+    subjects: { one: "предмет", few: "предмети", many: "предметів" },
+    days: { one: "день", few: "дні", many: "днів" },
   },
 };
 

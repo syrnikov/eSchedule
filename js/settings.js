@@ -1,28 +1,24 @@
-// Settings screen, built from groups (Про тебе · Нагадування · Посилання · Резервна копія)
-// plus a small credits footer.
+// App settings (#settings, the gear): Нагадування · Посилання, plus a small credits footer.
+// The student's own things (name, backup) are on the profile screen (profile-view.js), and
+// clearing stats is on the stats screen (stats-view.js).
 // To add a setting later, add another group(...) in renderSettings.
 // Rendered once when opened (not on the 15 s loop, so typing is never interrupted).
 
 import { STRINGS } from "./strings.js";
 import { el, icon } from "./dom.js";
-import { kyivParts, pluralize, keepName } from "./format.js";
+import { pluralize, keepName } from "./format.js";
 import {
   loadLinks, saveLinks, setLink, isValidUrl, collectPairs, collectTeachers,
 } from "./links.js";
-import { buildBackup, parseBackup } from "./backup.js";
-import { loadContacts, saveContacts } from "./contacts.js";
-import { loadTasks, saveTasks, mergeTasks } from "./tasks.js";
-import { loadJoins, addJoins, mergeJoins, clearJoins } from "./stats.js";
-import { loadProfile, saveProfile, cleanName, MAX_NAME_LENGTH } from "./profile.js";
+import { loadContacts } from "./contacts.js";
 import { pushSupport, loadPushPrefs, applyPush, groupKey, wantsPush, LEADS } from "./push.js";
 import { ALARM_REGION } from "./config.js";
 import { encodeShare, shareUrl } from "./share.js";
 
 const S = STRINGS.settingsView;
-const MAX_IMPORT_BYTES = 2_000_000; // links + up to MAX_JOINS stats records
 
-// A titled group of cards.
-const group = (title, ...cards) =>
+// A titled group of cards. Also used by the profile and stats screens.
+export const group = (title, ...cards) =>
   el("section", { class: "settings-group" }, el("h2", { class: "group-title" }, title), cards);
 
 // On/off row: the whole row is the label, so the tap target is the full width.
@@ -104,50 +100,6 @@ function shareCard() {
     manual,
     status);
   return { card, prepare };
-}
-
-// «Статистика»: what's stored, and a way to wipe it. Clearing takes a second tap
-// (no browser confirm() dialogs in this app).
-function statsCard() {
-  const count = el("p", { class: "field-context" });
-  const status = el("p", { class: "settings-status", "aria-live": "polite" });
-  const button = el("button", { type: "button", class: "btn btn--secondary btn--wide" }, S.statsClear);
-  let armed = false;
-  let disarm = null;
-
-  const show = (joins) => {
-    count.textContent = joins.length ? S.statsCount(pluralize(joins.length, STRINGS.units.records)) : S.statsEmpty;
-    button.disabled = joins.length === 0;
-  };
-  loadJoins().then(show);
-
-  button.addEventListener("click", async () => {
-    if (!armed) {
-      armed = true;
-      button.textContent = S.statsClearConfirm;
-      button.classList.add("btn--danger");
-      disarm = setTimeout(() => {
-        armed = false;
-        button.textContent = S.statsClear;
-        button.classList.remove("btn--danger");
-      }, 5000);
-      return;
-    }
-    clearTimeout(disarm);
-    armed = false;
-    button.textContent = S.statsClear;
-    button.classList.remove("btn--danger");
-    const ok = await clearJoins();
-    status.textContent = ok ? S.statsCleared : S.storageBlocked;
-    status.className = `settings-status${ok ? "" : " is-error"}`;
-    show(ok ? [] : await loadJoins());
-  });
-
-  return el("div", { class: "card" },
-    el("p", { class: "field-context section-hint" }, S.statsHint),
-    count,
-    el("div", { class: "stats-actions" }, button),
-    status);
 }
 
 // «Нагадування»: iOS install steps, a "can't" note, or the actual switches.
@@ -235,7 +187,7 @@ function pushCard(schedule) {
 }
 
 // focusKey: link key to focus (from the hero's «Додати»), or null.
-export function renderSettings(container, schedule, { focusKey = null, message = "" } = {}) {
+export function renderSettings(container, schedule, { focusKey = null } = {}) {
   const classes = schedule?.classes ?? [];
   const links = loadLinks();
   let fieldCount = 0;
@@ -279,30 +231,6 @@ export function renderSettings(container, schedule, { focusKey = null, message =
       msg);
   }
 
-  // --- Group: about you (the name for the greeting) ---
-  const nameMsg = el("p", { class: "field-msg", id: "profile-name-msg", "aria-live": "polite" });
-  const nameInput = el("input", {
-    id: "profile-name", type: "text", autocomplete: "given-name", autocapitalize: "words",
-    maxlength: String(MAX_NAME_LENGTH), placeholder: S.namePlaceholder, "aria-describedby": "profile-name-msg",
-  });
-  nameInput.value = loadProfile().name;
-  nameInput.addEventListener("change", () => {
-    const name = cleanName(nameInput.value);
-    nameInput.value = name;
-    if (name === loadProfile().name) return;
-    const ok = saveProfile({ name });
-    nameMsg.textContent = ok ? S.saved : S.storageBlocked;
-    nameMsg.className = `field-msg is-${ok ? "saved" : "error"}`;
-  });
-
-  const profileGroup = group(S.profileGroup,
-    el("div", { class: "card" },
-      el("div", { class: "field" },
-        el("label", { for: "profile-name", class: "field-label" }, S.nameLabel),
-        el("p", { class: "field-context" }, S.nameHint),
-        nameInput,
-        nameMsg)));
-
   const pushGroup = group(S.pushGroup, pushCard(schedule));
 
   // --- Group: links ---
@@ -335,58 +263,6 @@ export function renderSettings(container, schedule, { focusKey = null, message =
   // listener runs before this one, which only hears the event bubble up.)
   linksGroup.addEventListener("change", (e) => { if (e.target.matches("input[data-key]")) share.prepare(); });
 
-  // --- Group: backup (import / export) ---
-  const status = el("p", { class: "settings-status", "aria-live": "polite" }, message);
-  const fileInput = el("input", { type: "file", accept: "application/json,.json", hidden: true });
-
-  const exportBtn = el("button", { type: "button", class: "btn btn--primary" }, icon("download"), S.export);
-  exportBtn.addEventListener("click", async () => {
-    const backup = buildBackup(loadLinks(), await loadJoins(), { contacts: loadContacts(), tasks: loadTasks() });
-    const blob = new Blob([backup], { type: "application/json" });
-    const a = el("a", { href: URL.createObjectURL(blob), download: S.exportFile(kyivParts(new Date()).date) });
-    document.body.append(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-  });
-
-  const importBtn = el("button", { type: "button", class: "btn btn--secondary" }, icon("upload"), S.import);
-  importBtn.addEventListener("click", () => fileInput.click());
-  fileInput.addEventListener("change", async () => {
-    const file = fileInput.files?.[0];
-    fileInput.value = "";
-    if (!file) return;
-    try {
-      if (file.size > MAX_IMPORT_BYTES) throw new Error("backup: file too big");
-      const { links: imported, joins, contacts, tasks } = parseBackup(await file.text());
-      // Merge: imported links, emails and tasks win, ones not in the file are kept; stats are
-      // added without duplicates.
-      if (!saveLinks({ ...loadLinks(), ...imported })) throw new Error("links: storage blocked");
-      if (!saveContacts({ ...loadContacts(), ...contacts })) throw new Error("contacts: storage blocked");
-      if (!saveTasks(mergeTasks(loadTasks(), tasks))) throw new Error("tasks: storage blocked");
-      const newJoins = mergeJoins(await loadJoins(), joins);
-      await addJoins(newJoins);
-      const counts = [];
-      const linkCount = Object.keys(imported).length;
-      const emailCount = Object.keys(contacts).length;
-      if (linkCount || (!emailCount && !tasks.length && !newJoins.length)) counts.push(pluralize(linkCount, STRINGS.units.links));
-      if (emailCount) counts.push(pluralize(emailCount, STRINGS.units.emails));
-      if (tasks.length) counts.push(pluralize(tasks.length, STRINGS.units.tasks));
-      if (newJoins.length) counts.push(pluralize(newJoins.length, STRINGS.units.records));
-      renderSettings(container, schedule, { message: S.imported(counts.join(" · ")) });
-    } catch (err) {
-      console.warn(err);
-      status.textContent = S.importError;
-      status.className = "settings-status is-error";
-    }
-  });
-
-  const backupGroup = group(S.backupGroup,
-    el("div", { class: "card" },
-      el("p", { class: "field-context section-hint" }, S.backupHint),
-      el("div", { class: "settings-actions" }, exportBtn, importBtn, fileInput),
-      status));
-
   // --- Credits: plain small text at the bottom, not a card ---
   const about = el("footer", { class: "about" },
     el("p", { class: "about-tagline" }, S.tagline),
@@ -399,11 +275,8 @@ export function renderSettings(container, schedule, { focusKey = null, message =
     el("div", { class: "settings-top" },
       el("a", { class: "icon-btn", href: "#", "aria-label": S.back }, icon("arrow_back")),
       el("h1", { class: "settings-title", tabindex: "-1" }, S.title)),
-    profileGroup,
     pushGroup,
     linksGroup,
-    group(S.statsGroup, statsCard()),
-    backupGroup,
     about,
   );
 
