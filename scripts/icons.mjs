@@ -12,10 +12,11 @@ import { writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
 export const ICONS = [
-  "add_box", "add_link", "arrow_back", "calendar_month", "celebration", "check_circle", "chevron_right",
-  "cloud_off", "coffee", "download", "edit_note", "expand_more", "group", "history", "ios_share",
-  "link_off", "lock", "notifications", "open_in_browser", "radio_button_checked", "schedule", "school",
-  "science", "settings", "upload", "videocam", "warning", "weekend",
+  "add", "add_box", "add_link", "arrow_back", "assignment", "calendar_month", "celebration",
+  "check_circle", "chevron_right", "cloud_off", "coffee", "contact_mail", "delete", "download",
+  "edit_note", "expand_more", "group", "history", "ios_share", "link_off", "lock", "mail",
+  "notifications", "open_in_browser", "radio_button_checked", "radio_button_unchecked", "schedule",
+  "school", "science", "settings", "upload", "videocam", "warning", "weekend",
 ];
 
 export const FONT_FILE = "fonts/material-symbols-rounded.woff2";

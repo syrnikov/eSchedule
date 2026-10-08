@@ -10,6 +10,8 @@ import {
   loadLinks, saveLinks, setLink, isValidUrl, collectPairs, collectTeachers,
 } from "./links.js";
 import { buildBackup, parseBackup } from "./backup.js";
+import { loadContacts, saveContacts } from "./contacts.js";
+import { loadTasks, saveTasks, mergeTasks } from "./tasks.js";
 import { loadJoins, addJoins, mergeJoins, clearJoins } from "./stats.js";
 import { loadProfile, saveProfile, cleanName, MAX_NAME_LENGTH } from "./profile.js";
 import { pushSupport, loadPushPrefs, applyPush, groupKey, wantsPush, LEADS } from "./push.js";
@@ -46,12 +48,18 @@ function shareCard() {
 
   async function prepare() {
     const links = loadLinks();
-    const count = Object.keys(links).length;
-    hint.textContent = count ? S.shareHint(pluralize(count, STRINGS.units.links)) : S.shareNothing;
-    button.disabled = count === 0;
+    const contacts = loadContacts();
+    const linkCount = Object.keys(links).length;
+    const emailCount = Object.keys(contacts).length;
+    const parts = [
+      linkCount && pluralize(linkCount, STRINGS.units.links),
+      emailCount && pluralize(emailCount, STRINGS.units.emails),
+    ].filter(Boolean);
+    hint.textContent = parts.length ? S.shareHint(parts.length === 2 ? S.shareAnd(...parts) : parts[0]) : S.shareNothing;
+    button.disabled = parts.length === 0;
     manual.hidden = true;
     prepared = null;
-    if (count) prepared = shareUrl(location.origin + location.pathname, await encodeShare(links));
+    if (parts.length) prepared = shareUrl(location.origin + location.pathname, await encodeShare(links, contacts));
   }
 
   const say = (text, error = false) => {
@@ -333,7 +341,8 @@ export function renderSettings(container, schedule, { focusKey = null, message =
 
   const exportBtn = el("button", { type: "button", class: "btn btn--primary" }, icon("download"), S.export);
   exportBtn.addEventListener("click", async () => {
-    const blob = new Blob([buildBackup(loadLinks(), await loadJoins())], { type: "application/json" });
+    const backup = buildBackup(loadLinks(), await loadJoins(), { contacts: loadContacts(), tasks: loadTasks() });
+    const blob = new Blob([backup], { type: "application/json" });
     const a = el("a", { href: URL.createObjectURL(blob), download: S.exportFile(kyivParts(new Date()).date) });
     document.body.append(a);
     a.click();
@@ -349,12 +358,20 @@ export function renderSettings(container, schedule, { focusKey = null, message =
     if (!file) return;
     try {
       if (file.size > MAX_IMPORT_BYTES) throw new Error("backup: file too big");
-      const { links: imported, joins } = parseBackup(await file.text());
-      // Merge: imported links win, links not in the file are kept; stats are added without duplicates.
+      const { links: imported, joins, contacts, tasks } = parseBackup(await file.text());
+      // Merge: imported links, emails and tasks win, ones not in the file are kept; stats are
+      // added without duplicates.
       if (!saveLinks({ ...loadLinks(), ...imported })) throw new Error("links: storage blocked");
+      if (!saveContacts({ ...loadContacts(), ...contacts })) throw new Error("contacts: storage blocked");
+      if (!saveTasks(mergeTasks(loadTasks(), tasks))) throw new Error("tasks: storage blocked");
       const newJoins = mergeJoins(await loadJoins(), joins);
       await addJoins(newJoins);
-      const counts = [pluralize(Object.keys(imported).length, STRINGS.units.links)];
+      const counts = [];
+      const linkCount = Object.keys(imported).length;
+      const emailCount = Object.keys(contacts).length;
+      if (linkCount || (!emailCount && !tasks.length && !newJoins.length)) counts.push(pluralize(linkCount, STRINGS.units.links));
+      if (emailCount) counts.push(pluralize(emailCount, STRINGS.units.emails));
+      if (tasks.length) counts.push(pluralize(tasks.length, STRINGS.units.tasks));
       if (newJoins.length) counts.push(pluralize(newJoins.length, STRINGS.units.records));
       renderSettings(container, schedule, { message: S.imported(counts.join(" · ")) });
     } catch (err) {

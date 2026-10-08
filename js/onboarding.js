@@ -9,8 +9,9 @@
 import { STRINGS } from "./strings.js";
 import { el, icon } from "./dom.js";
 import { pluralize, keepName } from "./format.js";
-import { decodeShare, diffShare } from "./share.js";
+import { decodeSharePayload, diffShare, diffContacts } from "./share.js";
 import { loadLinks, saveLinks } from "./links.js";
+import { loadContacts, saveContacts } from "./contacts.js";
 import { loadProfile, saveProfile, MAX_NAME_LENGTH } from "./profile.js";
 import {
   pushSupport, loadPushPrefs, applyPush, groupKey, wantsPush, snoozePushCard, isIos, isStandalone,
@@ -69,6 +70,8 @@ function linksPage({ entries, shareError }, next) {
   }
 
   const replaces = entries.filter((e) => e.status === "replace").length;
+  const linkCount = entries.filter((e) => e.kind !== "email").length;
+  const emailCount = entries.length - linkCount;
   const status = el("p", { class: "settings-status is-error", "aria-live": "polite" });
   const add = primary(O.linksAdd);
   const skip = quiet(O.linksSkip);
@@ -84,21 +87,31 @@ function linksPage({ entries, shareError }, next) {
     el("label", { for: box.id, class: "share-row" },
       box,
       el("span", { class: "share-text" },
-        el("span", { class: "share-name" }, e.sub ? `${e.title} · ${e.sub}` : keepName(e.title)),
+        el("span", { class: "share-name" },
+          e.kind === "email" ? `${keepName(e.title)} · ${O.emailBadge}` : e.sub ? `${e.title} · ${e.sub}` : keepName(e.title)),
         e.status === "replace" && el("span", { class: "share-badge" }, O.linksReplaces)))));
 
   add.addEventListener("click", () => {
     const links = loadLinks();
-    for (const { box, entry } of boxes) if (box.checked) links[entry.key] = entry.url;
-    if (!saveLinks(links)) { status.textContent = O.storageBlocked; return; }
+    const contacts = loadContacts();
+    for (const { box, entry } of boxes) {
+      if (box.checked) (entry.kind === "email" ? contacts : links)[entry.key] = entry.url;
+    }
+    if (!saveLinks(links) || !saveContacts(contacts)) { status.textContent = O.storageBlocked; return; }
     next();
   });
   skip.addEventListener("click", next);
 
+  const emails = emailCount ? pluralize(emailCount, STRINGS.units.teachers) : "";
+  const text = [
+    linkCount ? O.linksText : O.emailsText,
+    linkCount && emailCount && O.linksEmails(emails),
+    replaces && O.linksReplace(replaces),
+  ].filter(Boolean).join(" ");
   return page({
     badge: badge(icon("check_circle", "40"), "good"),
-    title: O.linksTitle(pluralize(entries.length, STRINGS.units.links)),
-    text: replaces ? `${O.linksText} ${O.linksReplace(replaces)}` : O.linksText,
+    title: linkCount ? O.linksTitle(pluralize(linkCount, STRINGS.units.links)) : O.emailsTitle(emails),
+    text,
     body: el("details", { class: "card card--compact disclosure onb-details" },
       el("summary", {}, el("span", { class: "disclosure-title" }, O.linksDetails), icon("expand_more", "20")),
       el("ul", { class: "share-list" }, items)),
@@ -205,7 +218,9 @@ export async function renderOnboarding(container, { fragment, getSchedule, onDon
   if (fragment !== null) {
     try {
       // What the student already has isn't worth a page.
-      entries = diffShare(await decodeShare(fragment), loadLinks()).filter((e) => e.status !== "same");
+      const { links, contacts } = await decodeSharePayload(fragment);
+      entries = [...diffShare(links, loadLinks()), ...diffContacts(contacts, loadContacts())]
+        .filter((e) => e.status !== "same");
     } catch (err) {
       console.warn(err);
       shareError = err.code === "unsupported" ? O.tooOld : O.broken;

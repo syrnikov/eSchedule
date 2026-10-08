@@ -5,6 +5,7 @@ import { STRINGS } from "./strings.js";
 import { el, icon } from "./dom.js";
 import { addDays, weekdayOf, formatLongDate, pluralize } from "./format.js";
 import { classRow } from "./class-row.js";
+import { dueOn } from "./tasks.js";
 
 const D = STRINGS.days;
 
@@ -22,9 +23,11 @@ export function daysAhead(schedule, today) {
   return days;
 }
 
-export function renderDays(container, schedule, today) {
+// tasks: for the marker on classes that have something due that day.
+export function renderDays(container, schedule, today, tasks = []) {
   const tomorrow = addDays(today, 1);
   const cards = daysAhead(schedule, today).map(({ date, classes }) => {
+    const due = dueOn(tasks, date);
     // Noon UTC is the same calendar day in Kyiv.
     const name = formatLongDate(new Date(`${date}T12:00:00Z`));
     return el("section", { class: "card" },
@@ -32,7 +35,7 @@ export function renderDays(container, schedule, today) {
         el("h2", { class: "day-name" }, date === tomorrow ? `${D.tomorrow} · ${name}` : name),
         classes.length > 0 && el("span", { class: "day-count" }, pluralize(classes.length, STRINGS.units.classes))),
       classes.length
-        ? el("ul", { class: "rows" }, classes.map((c) => classRow(c)))
+        ? el("ul", { class: "rows" }, classes.map((c) => classRow(c, { due: due.has(c.discipline) })))
         : el("p", { class: "day-none" }, D.none));
   });
 

@@ -7,6 +7,12 @@ One calm screen that answers: **what should I be doing right now, and what's nex
 - Live status: live, starting soon, break, done for today, weekend
 - Pauses for air alarms in Odesa oblast, and says so when the alarm status is unknown
 - Today's classes, a preview of tomorrow that opens the days ahead, and when the schedule was last updated
+- **Завдання**: tasks with notes, a subject and a due date («До пари» picks the next class of that
+  subject); tap one to edit it. What's due within a week shows on the home screen, and classes with
+  something due get a marker
+- **Викладачі**: everyone in the schedule, what they teach, and a one-tap email with the subject
+  filled in once you've added their address
+- A floating tab bar (Пари · Завдання · Викладачі); settings, the days ahead and `#join` stay sub-screens
 - Installable on a phone's home screen, light and dark mode, Ukrainian UI
 - Optional push reminders before class (5/10/15 min), and optional pushes when an alert
   starts or ends mid-class
@@ -65,15 +71,18 @@ Worker cron (every minute) ──> schedule.json from Pages (cached 30 min in KV
 | `js/settings.js`, `js/links.js` | Settings screen; link storage, import/export |
 | `js/voice.js` | Greeting, day summary, tomorrow’s tone, subject accent colour (pure) |
 | `js/profile.js`, `js/onboarding.js` | The name to greet you by and the last «Що нового» seen (device only); first-launch pages, including links from the group |
+| `js/tabbar.js` | The floating tab bar (`#`, `#tasks`, `#teachers`); tabs replace the history entry |
+| `js/tasks.js`, `js/tasks-view.js` | Tasks in localStorage (`pary.tasks.v1`), grouping by due date (pure); the «Завдання» tab |
+| `js/contacts.js`, `js/teachers-view.js` | Teachers' emails in localStorage (`pary.contacts.v1`, keyed like teacher links), `mailto:` building; the «Викладачі» tab |
 | `js/days-view.js`, `js/join-view.js`, `js/class-row.js` | «Наступні дні» (`#days`); the screen a push opens (`#join`); the class row both lists share |
 | `js/format.js` | Kyiv time and Ukrainian formatting |
 | `js/strings.js` | **All UI text** |
 | `js/config.js` | Worker URL and alarm region |
 | `scraper/` | `scrape.mjs` (fetch + write), `parse.mjs` (pure), saved API responses in `fixtures/` |
 | `worker/` | Cloudflare Worker and `wrangler.toml`: alarm proxy (`worker.js`), push API + cron (`push.js`), Web Push crypto (`webpush.js`), D1 schema (`migrations/`) |
-| `js/share.js` | «Поділитися з групою»: links in the URL #fragment, and which shares were already offered |
+| `js/share.js` | «Поділитися з групою»: links (and teachers' emails) in the URL #fragment, and which shares were already offered |
 | `js/push.js`, `sw.js` | Browser side of push: support detection, subscribe, service worker |
-| `js/stats.js`, `js/backup.js` | Local «Приєднатися» taps (IndexedDB) and the weekly card; backup file (v2 = links + stats, v1 still imports) |
+| `js/stats.js`, `js/backup.js` | Local «Приєднатися» taps (IndexedDB) and the weekly card; backup file (v3 = links + stats + emails + tasks; v2 and v1 still import) |
 | `.github/workflows/scrape.yml` | Scheduled scraper |
 | `tests/` | `node:test` tests |
 

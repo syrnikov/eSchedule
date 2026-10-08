@@ -42,17 +42,23 @@
       <section class="card hero" id="hero"></section>
       <section class="card" id="today" hidden></section>
       <section class="card stats-card" id="stats" hidden></section>
+      <section class="card card--compact" id="deadlines" hidden></section>
       <section class="card push-card" id="push-card" hidden></section>
       <section class="card card--compact" id="tomorrow" hidden></section>
 
       <footer class="foot" id="footer"></footer>
     </div>
 
+    <div class="view" id="tasks-view" hidden></div>
+    <div class="view" id="teachers-view" hidden></div>
     <div class="view" id="settings-view" hidden></div>
     <div class="view" id="days-view" hidden></div>
     <div class="view" id="join-view" hidden></div>
     <div class="view" id="onboarding-view" hidden></div>
   </main>
+
+  <!-- Пари · Завдання · Викладачі (js/tabbar.js fills it in) -->
+  <nav class="tabbar" id="tabbar" hidden></nav>
 
   <dialog class="news" id="news" aria-labelledby="news-title"></dialog>
 </body>

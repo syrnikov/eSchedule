@@ -2,12 +2,15 @@
 // which browsers never send anywhere. Format after "#share=":
 //   "z" + base64url(deflate-raw(JSON))   when CompressionStream exists (all current browsers)
 //   "j" + base64url(JSON)                fallback
-// JSON = { v: 1, links: { "@Teacher": "https://…", "Discipline|Type": "https://…" } }
+// JSON = { v: 1, links: { "@Teacher": "https://…", "Discipline|Type": "https://…" },
+//          contacts: { "@Teacher": "name@osau.edu.ua" } }        contacts: optional, newer apps only
+// Older apps ignore `contacts`, so a share stays readable for everyone.
 //
 // Everything that arrives is untrusted: sizes are capped before and after decompressing, the
 // shape is checked, only https links survive, and the UI renders it all as text.
 
 import { isValidUrl } from "./links.js";
+import { isTeacherKey, isValidEmail } from "./contacts.js";
 import { hash } from "./strings.js";
 
 export const SHARE_PREFIX = "#share=";
@@ -81,26 +84,43 @@ export function describeKey(key) {
   return { kind: "pair", title: discipline, sub: type };
 }
 
-// Keeps only well-formed "key -> https URL" pairs, capped in number.
-export function validateShared(data) {
-  if (!data || typeof data !== "object" || data.v !== VERSION) throw fail("broken");
-  const links = data.links;
-  if (!links || typeof links !== "object" || Array.isArray(links)) throw fail("broken");
+const isPlainObject = (value) => Boolean(value) && typeof value === "object" && !Array.isArray(value);
+
+// Keeps only well-formed "key -> value" pairs, capped in number.
+function keep(entries, ok) {
   const out = {};
   let count = 0;
-  for (const [key, url] of Object.entries(links)) {
+  for (const [key, value] of entries) {
     if (++count > MAX_ENTRIES) break;
-    if (isLinkKey(key) && isValidUrl(url)) out[key] = url;
+    if (ok(key, value)) out[key] = value;
   }
-  if (Object.keys(out).length === 0) throw fail("broken");
   return out;
 }
 
+// -> { links, contacts }: well-formed "key -> https URL" links and "@teacher -> email" contacts.
+// Throws if neither has anything left.
+export function validateSharePayload(data) {
+  if (!isPlainObject(data) || data.v !== VERSION || !isPlainObject(data.links)) throw fail("broken");
+  const links = keep(Object.entries(data.links), (key, url) => isLinkKey(key) && isValidUrl(url));
+  const contacts = isPlainObject(data.contacts)
+    ? keep(Object.entries(data.contacts), (key, email) => isTeacherKey(key) && isValidEmail(email))
+    : {};
+  if (Object.keys(links).length === 0 && Object.keys(contacts).length === 0) throw fail("broken");
+  return { links, contacts };
+}
+
+// Just the links (what older shares carry).
+export const validateShared = (data) => validateSharePayload(data).links;
+
 // --- Encode / decode ---
 
-export async function encodeShare(links) {
-  const sorted = Object.fromEntries(Object.entries(links).sort(([a], [b]) => a.localeCompare(b, "uk")));
-  const bytes = new TextEncoder().encode(JSON.stringify({ v: VERSION, links: sorted }));
+const sortKeys = (obj) => Object.fromEntries(Object.entries(obj).sort(([a], [b]) => a.localeCompare(b, "uk")));
+
+// contacts are left out when there are none, so a links-only share is the same as before.
+export async function encodeShare(links, contacts = {}) {
+  const payload = { v: VERSION, links: sortKeys(links) };
+  if (Object.keys(contacts).length) payload.contacts = sortKeys(contacts);
+  const bytes = new TextEncoder().encode(JSON.stringify(payload));
   if (typeof CompressionStream === "function") {
     const packed = await readAll(through(bytes, new CompressionStream("deflate-raw")), Infinity);
     return `z${toB64url(packed)}`;
@@ -108,7 +128,8 @@ export async function encodeShare(links) {
   return `j${toB64url(bytes)}`;
 }
 
-export async function decodeShare(fragment) {
+// -> { links, contacts }
+export async function decodeSharePayload(fragment) {
   if (typeof fragment !== "string" || fragment.length < 2 || fragment.length > MAX_FRAGMENT_LENGTH) throw fail("broken");
   const kind = fragment[0];
   const bytes = fromB64url(fragment.slice(1));
@@ -132,8 +153,11 @@ export async function decodeShare(fragment) {
   } catch {
     throw fail("broken");
   }
-  return validateShared(data);
+  return validateSharePayload(data);
 }
+
+// Just the links.
+export const decodeShare = async (fragment) => (await decodeSharePayload(fragment)).links;
 
 export const shareUrl = (base, encoded) => `${base}${SHARE_PREFIX}${encoded}`;
 
@@ -177,4 +201,15 @@ export function diffShare(incoming, current) {
     })
     .sort((a, b) => (a.kind === b.kind ? 0 : a.kind === "teacher" ? -1 : 1) ||
       a.title.localeCompare(b.title, "uk") || a.sub.localeCompare(b.sub, "uk"));
+}
+
+// The same for teachers' email addresses. kind "email", so the page can label them.
+export function diffContacts(incoming, current) {
+  return Object.entries(incoming)
+    .map(([key, email]) => {
+      const mine = current[key];
+      const status = !mine ? "new" : mine === email ? "same" : "replace";
+      return { key, url: email, status, current: mine ?? null, kind: "email", title: key.slice(1), sub: "" };
+    })
+    .sort((a, b) => a.title.localeCompare(b.title, "uk"));
 }

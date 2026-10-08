@@ -109,6 +109,91 @@ export const STRINGS = {
     noSchedule: "Розклад ще не завантажено.",
   },
 
+  // The floating tab bar on the three main screens.
+  tabs: {
+    label: "Розділи",
+    main: "Пари",
+    tasks: "Завдання",
+    teachers: "Викладачі",
+  },
+
+  // Tasks (#tasks): what's due and when. Stored only on this device. A missed date is said
+  // gently («Час минув»), never as a failure.
+  tasks: {
+    title: "Завдання",
+    titleLabel: "Нове завдання",
+    placeholder: "Що треба зробити?",
+    subjectLabel: "Предмет",
+    noSubject: "Без предмета",
+    notesLabel: "Нотатки",
+    notesPlaceholder: "Сторінки, вимоги, посилання…",
+    nameLabel: "Назва",
+    editDone: "Готово",
+    delete: "Видалити",
+    deleteConfirm: "Точно? Натисни ще раз",
+    dueLabel: "Термін",
+    dueNone: "Без терміну",
+    dueToday: "Сьогодні",
+    dueTomorrow: "Завтра",
+    dueNextClass: "До пари",
+    dueDate: "Дата",
+    dateLabel: "Дата терміну",
+    add: "Додати",
+    added: (title) => `Додано: ${title}`,
+    sections: {
+      overdue: "Час минув",
+      today: "Сьогодні",
+      tomorrow: "Завтра",
+      week: "Цього тижня",
+      later: "Пізніше",
+      noDate: "Без терміну",
+    },
+    done: "Виконані",
+    clearDone: "Очистити виконані",
+    clearConfirm: "Точно? Натисни ще раз",
+    empty: "Поки нічого. Додай завдання — коли наближатиметься термін, воно з’явиться на головному екрані.",
+    allDone: "Усе зроблено. Так тримати 🎉",
+    markDone: (title) => `Виконано: ${title}`,
+    markOpen: (title) => `Ще не виконано: ${title}`,
+    remove: (title) => `Видалити: ${title}`,
+    removeConfirm: (title) => `Натисни ще раз, щоб видалити: ${title}`,
+    // When it's due, after the title: "сьогодні", "в четвер", "12 жовтня", "було на 3 жовтня"
+    when: { today: "сьогодні", tomorrow: "завтра" },
+    wasDue: (date) => `було на ${date}`,
+    deviceOnly: "Завдання зберігаються лише на цьому пристрої.",
+    storageBlocked: "Не вдалося зберегти: браузер блокує сховище",
+  },
+
+  // Home card: tasks due soon. The whole card opens «Завдання».
+  deadlines: {
+    line: (count) => `${count} найближчим часом`,
+    next: (when, title) => `Найближче — ${when}: ${title}`,
+    open: "Відкрити завдання",
+    // On a class row: a task for this subject is due that day.
+    mark: "Є завдання на цей день",
+  },
+
+  // Teachers (#teachers): their email addresses, typed in by the student, device only.
+  teachers: {
+    title: "Викладачі",
+    hint: "Email-адреси зберігаються лише на цьому пристрої й потрапляють у резервну копію.",
+    addEmail: "Додати email",
+    emailLabel: (teacher) => `Email викладача: ${teacher}`,
+    placeholder: "name@osau.edu.ua",
+    invalid: "Схоже, в адресі помилка. Приклад: name@osau.edu.ua",
+    saved: "Збережено",
+    removed: "Адресу видалено",
+    storageBlocked: "Не вдалося зберегти: браузер блокує сховище",
+    write: (teacher) => `Написати листа: ${teacher}`,
+    edit: (teacher) => `Змінити email: ${teacher}`,
+    done: "Готово",
+    // The letter: the subject says which class and group, the rest is up to the student.
+    subject: (discipline, group) => [discipline, group].filter(Boolean).join(" · "),
+    body: "Добрий день!\n\n",
+    noSchedule: "Розклад ще не завантажено, тож список порожній.",
+    empty: "У розкладі поки немає викладачів.",
+  },
+
   // Opened from a reminder or an all-clear push (#join): one class, one button.
   joinView: {
     home: "На головну",
@@ -158,6 +243,10 @@ export const STRINGS = {
 
     // Page: links from the group (opened with #share=…). Nothing is saved before the tap.
     linksTitle: (count) => `${count} на пари від групи`,
+    emailsTitle: (count) => `Email ${count} від групи`,
+    emailsText: "Додам їх — і листа викладачу можна буде написати одним дотиком. Вони лишаться тільки на цьому пристрої.",
+    linksEmails: (count) => `А ще email ${count}.`,
+    emailBadge: "email",
     linksText: "Додам їх — і кнопка «Приєднатися» запрацює одразу. Вони лишаться тільки на цьому пристрої.",
     linksReplace: (count) => `Оновлять твої: ${count}.`,
     linksDetails: "Що саме",
@@ -207,12 +296,12 @@ export const STRINGS = {
   // «Що нового»: shown once to students who already use the app. Bump `version` when the
   // items change. New students never see it (they've just been shown everything).
   whatsNew: {
-    version: 1,
+    version: 2,
     title: "Що нового",
     items: [
-      { icon: "calendar_month", title: "Наступні дні", text: "Натисни на «Завтра» — і побачиш розклад наперед." },
-      { icon: "videocam", title: "Зі сповіщення — одразу на пару", text: "Нагадування й відбій відкривають кнопку «Приєднатися»." },
-      { icon: "group", title: "Простіше для групи", text: "Посилання від одногрупників додаються одним дотиком." },
+      { icon: "assignment", title: "Завдання", text: "Записуй, що здати й до якого дня. Те, що скоро, видно на головному екрані." },
+      { icon: "contact_mail", title: "Викладачі", text: "Додай email викладача — і лист з темою пари пишеться одним дотиком." },
+      { icon: "group", title: "Для групи", text: "«Поділитися з групою» тепер передає й email-адреси." },
     ],
     button: "Продовжити",
   },
@@ -268,7 +357,8 @@ export const STRINGS = {
     shareHint: (count) => `Одне посилання, в якому ${count}. Відкриєш його — і в одногрупників усе з’явиться після підтвердження.`,
     shareWarning: "Посилання на пари часто містять паролі. Надсилай тільки своїй групі.",
     shareButton: "Поділитися",
-    shareNothing: "Поки немає чим ділитися: додай хоча б одне посилання.",
+    shareNothing: "Поки немає чим ділитися: додай хоча б одне посилання чи email.",
+    shareAnd: (a, b) => `${a} і ${b}`,
     shareCopied: "Посилання скопійовано — встав його в чат групи",
     shareCopyManual: "Скопіюй це посилання й надішли групі:",
     shareText: "Посилання на пари для нашої групи",
@@ -284,7 +374,7 @@ export const STRINGS = {
 
     // Group: backup
     backupGroup: "Резервна копія",
-    backupHint: "Файл JSON з посиланнями й статистикою. Імпорт додає все до вже збереженого.",
+    backupHint: "Файл JSON з посиланнями, email-адресами, завданнями й статистикою. Імпорт додає все до вже збереженого.",
     export: "Експортувати",
     import: "Імпортувати",
     exportFile: (date) => `pary-links-${date}.json`,
@@ -318,6 +408,9 @@ export const STRINGS = {
     classes: { one: "пара", few: "пари", many: "пар" },
     links: { one: "посилання", few: "посилання", many: "посилань" },
     records: { one: "запис", few: "записи", many: "записів" },
+    tasks: { one: "завдання", few: "завдання", many: "завдань" },
+    emails: { one: "email-адреса", few: "email-адреси", many: "email-адрес" },
+    teachers: { one: "викладача", few: "викладачів", many: "викладачів" },
   },
 };
 

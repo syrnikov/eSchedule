@@ -18,6 +18,10 @@ import { loadProfile, saveProfile, shouldShowNews } from "./profile.js";
 import { renderOnboarding, featureRows } from "./onboarding.js";
 import { renderDays } from "./days-view.js";
 import { renderJoin, joinTarget } from "./join-view.js";
+import { renderTasks, deadlineLines } from "./tasks-view.js";
+import { renderTeachers } from "./teachers-view.js";
+import { renderTabbar, tabScroll } from "./tabbar.js";
+import { loadTasks, dueSoon, dueOn } from "./tasks.js";
 import { SHARE_PREFIX, isShareSeen, markShareSeen } from "./share.js";
 import { loadJoins, logJoin, makeJoin, weekSummary } from "./stats.js";
 import {
@@ -170,10 +174,11 @@ function renderToday(status) {
   if (card.hidden) return;
 
   const nowMin = kyivParts(now()).minutes;
+  const due = dueOn(loadTasks(), status.today);
   const rows = todays.map((c) => {
     const past = toMinutes(c.end) <= nowMin;
     const live = !past && toMinutes(c.start) <= nowMin;
-    return classRow(c, { past, live });
+    return classRow(c, { past, live, due: !past && due.has(c.discipline) });
   });
 
   const title = STRINGS.today(pluralize(todays.length, STRINGS.units.classes));
@@ -220,6 +225,21 @@ function renderStats(status = lastStatus) {
     el("div", {},
       el("p", { class: "stats-line" }, T.line(unit)),
       sub && el("p", { class: "stats-sub" }, sub)));
+}
+
+// "2 завдання найближчим часом": only when something is due within a week (or already late).
+// Hidden during an alert (shelter first). The whole card opens «Завдання».
+function renderDeadlines(status) {
+  const card = document.getElementById("deadlines");
+  const soon = status.state !== "paused" ? dueSoon(loadTasks(), status.today) : null;
+  card.hidden = !soon;
+  if (!soon) return;
+  const { line, sub } = deadlineLines(soon, status.today);
+  card.replaceChildren(el("a", { class: "tomorrow", href: "#tasks", "aria-label": `${line}. ${sub}. ${STRINGS.deadlines.open}` },
+    el("div", {},
+      el("p", { class: "tomorrow-line" }, line),
+      el("p", { class: "tomorrow-sub" }, sub)),
+    icon("chevron_right")));
 }
 
 // "Нагадувати про пари?": offered once, in context, on the home screen. The permission
@@ -327,6 +347,7 @@ function render() {
   renderToday(status);
   lastStatus = status;
   renderStats(status);
+  renderDeadlines(status);
   renderPushCard(status);
   renderTomorrow(status);
   renderFooter();
@@ -344,19 +365,21 @@ async function refreshSchedule() {
   }
   render();
   // A screen opened before the schedule arrived: fill it in now.
-  if (((settingsOpen() || daysOpen()) && viewEmpty && schedule) || joinOpen()) route();
+  const needsSchedule = settingsOpen() || daysOpen() || tasksOpen() || teachersOpen();
+  if ((needsSchedule && viewEmpty && schedule) || joinOpen()) route();
 }
 
 // --- Routing ---
 //   #settings, #settings:<link key>   settings
 //   #days                             the days ahead
+//   #tasks, #teachers                 the other two tabs
 //   #join                             one class, one button (from a push)
 //   #share=…                          links from a groupmate (goes through onboarding)
 //   anything else                     the main screen
 // On first launch the main screen waits behind the onboarding pages.
-const VIEWS = ["main", "settings", "days", "join", "onboarding"];
+const VIEWS = ["main", "tasks", "teachers", "settings", "days", "join", "onboarding"];
 let currentView = "main";
-let viewEmpty = false; // settings or days opened before the schedule arrived
+let viewEmpty = false; // a screen that needs the schedule opened before it arrived
 let onboardingActive = false;
 let onboardingDone = false; // for this session, in case storage is blocked
 let pendingShare = null;
@@ -364,11 +387,14 @@ let handledShare = null; // same, for the share
 let newsShown = false;
 const settingsOpen = () => location.hash.startsWith("#settings");
 const daysOpen = () => location.hash === "#days";
+const tasksOpen = () => location.hash === "#tasks";
+const teachersOpen = () => location.hash === "#teachers";
 const joinOpen = () => location.hash === "#join";
 const dropHash = () => history.replaceState(null, "", location.pathname + location.search);
 
 function showView(name) {
   for (const v of VIEWS) document.getElementById(`${v}-view`).hidden = v !== name;
+  renderTabbar(document.getElementById("tabbar"), name);
   currentView = name;
 }
 
@@ -461,7 +487,15 @@ function route() {
     showView("days");
     viewEmpty = !schedule;
     document.title = `${STRINGS.days.title} · ${STRINGS.appTitle}`;
-    renderDays(document.getElementById("days-view"), schedule, kyivParts(now()).date);
+    renderDays(document.getElementById("days-view"), schedule, kyivParts(now()).date, loadTasks());
+  } else if (tasksOpen() || teachersOpen()) {
+    const tasks = tasksOpen();
+    const name = tasks ? "tasks" : "teachers";
+    showView(name);
+    viewEmpty = !schedule;
+    document.title = `${(tasks ? STRINGS.tasks : STRINGS.teachers).title} · ${STRINGS.appTitle}`;
+    (tasks ? renderTasks : renderTeachers)(document.getElementById(`${name}-view`), { schedule, now: now() });
+    window.scrollTo(0, tabScroll(name));
   } else if (join) {
     showView("join");
     document.title = `${join.label} · ${join.cls.discipline}`;
@@ -473,7 +507,7 @@ function route() {
     showView("main");
     render(); // links may have changed
     refreshStats(); // …and stats (import or clear in settings)
-    window.scrollTo(0, 0);
+    window.scrollTo(0, tabScroll("main"));
     maybeShowNews();
   }
 }
