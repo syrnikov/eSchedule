@@ -102,7 +102,9 @@
 /* ---------- Base ---------- */
 *, *::before, *::after { box-sizing: border-box; }
 
-html { background: var(--bg-2); }
+/* The scrollbar's space is always kept, so switching between a short and a long screen
+   doesn't shift the page (and the tab bar) sideways. */
+html { background: var(--bg-2); scrollbar-gutter: stable; }
 
 body {
   margin: 0;
@@ -120,7 +122,8 @@ body {
 
 /* Controls behave like app controls: a long press doesn't select their text or pop up
    the link preview. Content text stays selectable. */
-.btn, .btn-join, .no-link, .icon-btn, .switch-row, .segment, .type-chip, .share-row, .tomorrow {
+.btn, .btn-join, .no-link, .icon-btn, .switch-row, .segment, .type-chip, .share-row, .tomorrow,
+.tab, .chip, .task-check, .task-remove {
   -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
@@ -642,6 +645,23 @@ a { color: inherit; }
   font: inherit;
   font-size: 16px; /* 16px+ stops iOS from zooming in on focus */
 }
+.field textarea {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  min-height: 88px;
+  padding: 12px 14px;
+  border: 1px solid var(--input-border);
+  border-radius: 14px;
+  background: var(--input-bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 16px; /* 16px+ stops iOS from zooming in on focus */
+  line-height: 1.4;
+  resize: vertical;
+}
+.field textarea:focus-visible { outline: 3px solid var(--text); outline-offset: 1px; }
+.field textarea::placeholder,
 .field input::placeholder { color: var(--muted); opacity: 0.7; }
 .field input:focus-visible { outline: 3px solid var(--text); outline-offset: 1px; }
 .field input[aria-invalid="true"] { border-color: var(--alarm); border-width: 2px; }
@@ -1028,3 +1048,256 @@ a { color: inherit; }
 .join-label { font-weight: 700; color: var(--live); }
 #join-view .btn--text { text-decoration: none; }
 
+/* ---------- Tab bar: a floating pill (Пари · Завдання · Викладачі) ---------- */
+/* Icon on top, label below; the current tab sits on a soft capsule. Frosted where the
+   browser can blur what scrolls underneath, the plain card colour where it can't. */
+.tabbar {
+  position: fixed;
+  left: 50%;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  z-index: 10;
+  display: flex;
+  gap: 4px;
+  padding: 6px;
+  border-radius: 999px;
+  background: var(--card);
+  box-shadow: var(--shadow), inset 0 0 0 1px var(--line);
+  transform: translateX(-50%);
+}
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .tabbar {
+    background: color-mix(in srgb, var(--card) 80%, transparent);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
+  }
+}
+.tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 76px;
+  min-height: 52px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  color: var(--muted);
+  text-decoration: none;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease;
+}
+.tab[aria-current="page"] { background: var(--neutral-soft); color: var(--text); }
+.tab:active { transform: scale(0.96); }
+.tab-label { font-size: 11px; font-weight: 500; line-height: 1.2; }
+
+/* Room for the bar under the last card. */
+body.has-tabbar .app { padding-bottom: calc(max(16px, env(safe-area-inset-bottom)) + 88px); }
+/* Out of the way while typing (on phones it would sit on top of the keyboard). */
+body:has(.view :is(input, select, textarea):focus) .tabbar { display: none; }
+
+/* Title of a tab screen: no back arrow, same height as a header with one. */
+.tab-top { min-height: 48px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tab, .chip, .task-check, .task-remove { transition: none; }
+}
+
+/* ---------- Shared bits for the tabs ---------- */
+.icon-btn--soft { background: var(--neutral-soft); box-shadow: none; color: var(--text); }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--neutral-soft);
+  color: var(--text);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+.chip:active { transform: scale(0.97); }
+.chip[aria-pressed="true"] { background: var(--btn-bg); color: var(--btn-text); }
+.chip--add { padding: 0 14px 0 10px; font-size: 14px; white-space: nowrap; }
+
+.select {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  min-height: 48px;
+  padding: 0 40px 0 14px;
+  border: 1px solid var(--input-border);
+  border-radius: 14px;
+  background-color: var(--input-bg);
+  /* A small chevron drawn with two gradients, so it follows the theme colours. */
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+    linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position: calc(100% - 21px) 50%, calc(100% - 16px) 50%;
+  background-size: 5px 5px;
+  background-repeat: no-repeat;
+  color: var(--text);
+  font: inherit;
+  font-size: 16px;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.select:focus-visible { outline: 3px solid var(--text); outline-offset: 1px; }
+
+/* ---------- Tasks (#tasks) ---------- */
+.task-add .card-title { display: block; }
+.task-add-row { display: flex; gap: 10px; align-items: center; }
+.task-add-row input {
+  flex: 1;
+  min-width: 0;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid var(--input-border);
+  border-radius: 14px;
+  background: var(--input-bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 16px; /* 16px+ stops iOS from zooming in on focus */
+}
+.task-add-row input::placeholder { color: var(--muted); opacity: 0.7; }
+.task-add-row input:focus-visible { outline: 3px solid var(--text); outline-offset: 1px; }
+.task-add-btn {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--btn-bg);
+  color: var(--btn-text);
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+.task-add-btn:active { transform: scale(0.95); }
+.task-add-btn:disabled { opacity: 0.3; cursor: default; }
+.task-options { margin-top: 14px; }
+.task-options .field:first-child { border-top: 1px solid var(--line); padding-top: 14px; }
+.task-due-hint { margin-top: 8px; }
+
+.task-sections { display: flex; flex-direction: column; gap: var(--gap); }
+.tasks { list-style: none; padding: 0; }
+.task {
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  gap: 6px;
+  align-items: center;
+  padding: 6px 0;
+  border-top: 1px solid var(--line);
+}
+.task:first-child { border-top: 0; padding-top: 0; }
+.task:last-child { padding-bottom: 0; }
+.task > * { min-width: 0; }
+.task-check, .task-remove {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+}
+.task-check { margin-left: -10px; }
+.task-check:active, .task-remove:active { transform: scale(0.9); }
+.task.is-done .task-check { color: var(--live); }
+.task-remove.is-armed { background: var(--alarm-soft); color: var(--alarm); }
+/* The text is a button that opens the task (title + notes editor). */
+.task-open {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  min-height: 44px;
+  justify-content: center;
+  padding: 6px 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.task-title { font-weight: 500; line-height: 1.3; overflow-wrap: anywhere; }
+.task.is-done .task-title { color: var(--muted); font-weight: 400; text-decoration: line-through; }
+.task-sub { margin-top: 2px; font-size: 14px; color: var(--muted); overflow-wrap: anywhere; }
+/* Notes: the first two lines as a preview; the editor shows them all. */
+.task-notes {
+  display: -webkit-box;
+  margin-top: 4px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--muted);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+.task-edit { grid-column: 1 / -1; padding: 4px 0 10px; }
+.task-edit .field:first-child { padding-top: 4px; }
+.task-edit .settings-actions { margin-top: 14px; }
+/* A missed date: amber, never red (no guilt). */
+.task-section--overdue .card-title,
+.task.is-overdue .task-sub { color: var(--soon); }
+.task-done .tasks { margin-bottom: 4px; }
+
+/* On a class row: something for this subject is due that day. */
+.due-mark {
+  display: inline-grid;
+  place-items: center;
+  margin: -10px 0;
+  padding: 10px 4px;
+  text-decoration: none;
+}
+.row-title .due-mark .icon { color: var(--soon); }
+
+/* ---------- Teachers (#teachers) ---------- */
+.contacts { list-style: none; padding: 0; }
+.contact {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 12px;
+  align-items: center;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+.contact:first-child { border-top: 0; padding-top: 0; }
+.contact:last-child { padding-bottom: 0; }
+.contact > * { min-width: 0; }
+.contact-name { font-weight: 500; line-height: 1.3; overflow-wrap: anywhere; }
+.contact-sub { margin-top: 2px; font-size: 14px; color: var(--muted); overflow-wrap: anywhere; }
+.contact-email {
+  display: block;
+  margin-top: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent-1);
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+.contact-edit, .contact-msg { grid-column: 1 / -1; }
+.contact .contact-edit { padding: 4px 0 0; border-top: 0; }
+.contact-edit-row { display: flex; gap: 8px; align-items: center; margin-top: 4px; }
+.contact-edit .contact-edit-row input:not([type="checkbox"]):not([type="radio"]) { flex: 1; min-width: 0; margin-top: 0; }
+.contact-done { flex-shrink: 0; min-height: 48px; }

@@ -81,17 +81,31 @@ test("mergeJoins skips records we already have", () => {
   assert.deepEqual(mergeJoins([a], [a, b]), [b]);
 });
 
-test("backup v2 round trip: links and stats", () => {
+const NONE = { contacts: {}, tasks: [] };
+
+test("backup v3 round trip: links, stats, emails and tasks", () => {
   const links = { "@Насакіна С. В.": "https://zoom.us/j/1" };
   const joins = [tap("2026-09-28", "08:15", "2026-09-28T08:12")];
-  const text = buildBackup(links, joins);
+  const contacts = { "@Насакіна С. В.": "nasakina@osau.edu.ua" };
+  const tasks = [{
+    id: "t1", title: "Звіт з лабораторної", notes: "Варіант 7\nс. 12–15", discipline: "Трактори", due: "2026-10-02",
+    done: false, doneAt: "", createdAt: "2026-09-28T08:00:00.000Z",
+  }];
+  const text = buildBackup(links, joins, { contacts, tasks });
   assert.equal(JSON.parse(text).version, BACKUP_VERSION);
-  assert.deepEqual(parseBackup(text), { links, joins });
+  assert.deepEqual(parseBackup(text), { links, joins, contacts, tasks });
+});
+
+test("backup: v2 files (links + stats, no emails or tasks) still import", () => {
+  const links = { "@Насакіна С. В.": "https://zoom.us/j/1" };
+  const joins = [tap("2026-09-28", "08:15", "2026-09-28T08:12")];
+  const v2 = JSON.stringify({ version: 2, links, stats: { joins } });
+  assert.deepEqual(parseBackup(v2), { links, joins, ...NONE });
 });
 
 test("backup: old files (links only, no version) still import", () => {
   const links = { "@Насакіна С. В.": "https://zoom.us/j/1", "Кураторська година|Лекції": "https://zoom.us/j/2" };
-  assert.deepEqual(parseBackup(exportJson(links)), { links, joins: [] });
+  assert.deepEqual(parseBackup(exportJson(links)), { links, joins: [], ...NONE });
 });
 
 test("backup: junk is rejected, bad parts are dropped", () => {
@@ -104,8 +118,12 @@ test("backup: junk is rejected, bad parts are dropped", () => {
     links: { "@A": "javascript:alert(1)", "@B": "https://zoom.us/j/3" },
     stats: { joins: [{ at: "x" }] },
   }));
-  assert.deepEqual(mixed, { links: { "@B": "https://zoom.us/j/3" }, joins: [] });
+  assert.deepEqual(mixed, { links: { "@B": "https://zoom.us/j/3" }, joins: [], ...NONE });
   // Stats alone are a valid backup too.
   const joins = [tap("2026-09-28", "08:15", "2026-09-28T08:12")];
   assert.deepEqual(parseBackup(buildBackup({}, joins)).joins, joins);
+  // So are emails or tasks alone; bad ones are dropped.
+  const onlyEmail = parseBackup(JSON.stringify({ version: 3, links: {}, contacts: { "@A": "a@x.ua", "@B": "nope" } }));
+  assert.deepEqual(onlyEmail.contacts, { "@A": "a@x.ua" });
+  assert.throws(() => parseBackup(JSON.stringify({ version: 3, links: {}, tasks: [{ title: "" }] })));
 });
