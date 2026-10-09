@@ -2,40 +2,10 @@
   "group": "208-бак-3к денне 26-27",
   "subgroup": "1б",
   "source": "https://osau.edu.ua/pro-universytet/pratsivnykam/rozklad-zanyat/",
-  "fetchedAt": "2026-10-08T18:09:59Z",
-  "rangeFrom": "2026-10-08",
-  "rangeTo": "2026-10-21",
+  "fetchedAt": "2026-10-09T00:49:28Z",
+  "rangeFrom": "2026-10-09",
+  "rangeTo": "2026-10-22",
   "classes": [
-    {
-      "date": "2026-10-08",
-      "start": "09:45",
-      "end": "11:05",
-      "discipline": "Зустріч зі стейкхолдерами",
-      "type": "Лекції",
-      "room": "",
-      "teacher": "",
-      "audience": "group"
-    },
-    {
-      "date": "2026-10-08",
-      "start": "11:15",
-      "end": "12:35",
-      "discipline": "Трактори і автомобілі",
-      "type": "Лекції",
-      "room": "онлайн",
-      "teacher": "Дядюра К. О.",
-      "audience": "group"
-    },
-    {
-      "date": "2026-10-08",
-      "start": "12:50",
-      "end": "14:10",
-      "discipline": "Теплотехніка та гідравлика",
-      "type": "Практичні",
-      "room": "онлайн",
-      "teacher": "Макарчук В. І.",
-      "audience": "group"
-    },
     {
       "date": "2026-10-09",
       "start": "09:45",
@@ -284,6 +254,36 @@
       "type": "Семінарські",
       "room": "онлайн",
       "teacher": "Варивода Ю. Ю.",
+      "audience": "group"
+    },
+    {
+      "date": "2026-10-22",
+      "start": "09:45",
+      "end": "11:05",
+      "discipline": "Зустріч зі стейкхолдерами",
+      "type": "Лекції",
+      "room": "",
+      "teacher": "",
+      "audience": "group"
+    },
+    {
+      "date": "2026-10-22",
+      "start": "11:15",
+      "end": "12:35",
+      "discipline": "Трактори і автомобілі",
+      "type": "Лекції",
+      "room": "онлайн",
+      "teacher": "Дядюра К. О.",
+      "audience": "group"
+    },
+    {
+      "date": "2026-10-22",
+      "start": "12:50",
+      "end": "14:10",
+      "discipline": "Теплотехніка та гідравлика",
+      "type": "Практичні",
+      "room": "онлайн",
+      "teacher": "Макарчук В. І.",
       "audience": "group"
     }
   ]
