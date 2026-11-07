@@ -2,30 +2,10 @@
   "group": "208-бак-3к денне 26-27",
   "subgroup": "1б",
   "source": "https://osau.edu.ua/pro-universytet/pratsivnykam/rozklad-zanyat/",
-  "fetchedAt": "2026-11-06T18:40:44Z",
-  "rangeFrom": "2026-11-06",
-  "rangeTo": "2026-11-19",
+  "fetchedAt": "2026-11-07T00:30:31Z",
+  "rangeFrom": "2026-11-07",
+  "rangeTo": "2026-11-20",
   "classes": [
-    {
-      "date": "2026-11-06",
-      "start": "09:45",
-      "end": "11:05",
-      "discipline": "Сільськогосподарські машини",
-      "type": "Практичні",
-      "room": "онлайн, 1",
-      "teacher": "Павлішин П. М.",
-      "audience": "group"
-    },
-    {
-      "date": "2026-11-06",
-      "start": "11:15",
-      "end": "12:35",
-      "discipline": "Теплотехніка та гідравлика",
-      "type": "Практичні",
-      "room": "онлайн, 1",
-      "teacher": "Макарчук В. І.",
-      "audience": "group"
-    },
     {
       "date": "2026-11-09",
       "start": "08:15",
@@ -310,6 +290,26 @@
       "date": "2026-11-19",
       "start": "12:50",
       "end": "14:10",
+      "discipline": "Теплотехніка та гідравлика",
+      "type": "Практичні",
+      "room": "онлайн, 1",
+      "teacher": "Макарчук В. І.",
+      "audience": "group"
+    },
+    {
+      "date": "2026-11-20",
+      "start": "09:45",
+      "end": "11:05",
+      "discipline": "Сільськогосподарські машини",
+      "type": "Практичні",
+      "room": "онлайн, 1",
+      "teacher": "Павлішин П. М.",
+      "audience": "group"
+    },
+    {
+      "date": "2026-11-20",
+      "start": "11:15",
+      "end": "12:35",
       "discipline": "Теплотехніка та гідравлика",
       "type": "Практичні",
       "room": "онлайн, 1",
