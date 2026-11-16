@@ -2,7 +2,7 @@
   "group": "208-бак-3к денне 26-27",
   "subgroup": "1б",
   "source": "https://osau.edu.ua/pro-universytet/pratsivnykam/rozklad-zanyat/",
-  "fetchedAt": "2026-11-16T00:31:58Z",
+  "fetchedAt": "2026-11-16T21:25:34Z",
   "rangeFrom": "2026-11-16",
   "rangeTo": "2026-11-29",
   "classes": [
@@ -57,16 +57,6 @@
       "audience": "group"
     },
     {
-      "date": "2026-11-17",
-      "start": "11:15",
-      "end": "12:35",
-      "discipline": "Соціальна робота в громаді",
-      "type": "Семінарські",
-      "room": "онлайн, 1",
-      "teacher": "Варивода Ю. Ю.",
-      "audience": "group"
-    },
-    {
       "date": "2026-11-18",
       "start": "09:45",
       "end": "11:05",
@@ -94,16 +84,6 @@
       "type": "Лекції",
       "room": "",
       "teacher": "",
-      "audience": "group"
-    },
-    {
-      "date": "2026-11-18",
-      "start": "14:20",
-      "end": "15:40",
-      "discipline": "Соціальна робота в громаді",
-      "type": "Семінарські",
-      "room": "онлайн, 1",
-      "teacher": "Варивода Ю. Ю.",
       "audience": "group"
     },
     {
@@ -171,7 +151,7 @@
       "start": "12:50",
       "end": "14:10",
       "discipline": "Соціальна робота в громаді",
-      "type": "Лекції",
+      "type": "Семінарські",
       "room": "онлайн, 1",
       "teacher": "Варивода Ю. Ю.",
       "audience": "group"
