@@ -2,50 +2,10 @@
   "group": "208-бак-3к денне 26-27",
   "subgroup": "1б",
   "source": "https://osau.edu.ua/pro-universytet/pratsivnykam/rozklad-zanyat/",
-  "fetchedAt": "2026-11-16T21:25:34Z",
-  "rangeFrom": "2026-11-16",
-  "rangeTo": "2026-11-29",
+  "fetchedAt": "2026-11-17T05:43:16Z",
+  "rangeFrom": "2026-11-17",
+  "rangeTo": "2026-11-30",
   "classes": [
-    {
-      "date": "2026-11-16",
-      "start": "08:15",
-      "end": "09:35",
-      "discipline": "Іноземна мова",
-      "type": "Практичні",
-      "room": "онлайн, 1",
-      "teacher": "Насакіна С. В.",
-      "audience": "group"
-    },
-    {
-      "date": "2026-11-16",
-      "start": "09:45",
-      "end": "11:05",
-      "discipline": "Сільськогосподарські машини",
-      "type": "Лекції",
-      "room": "онлайн, 1",
-      "teacher": "Дударев І. І.",
-      "audience": "group"
-    },
-    {
-      "date": "2026-11-16",
-      "start": "11:15",
-      "end": "12:35",
-      "discipline": "Теплотехніка та гідравлика",
-      "type": "Лекції",
-      "room": "онлайн, 1",
-      "teacher": "Уминський С. М.",
-      "audience": "group"
-    },
-    {
-      "date": "2026-11-16",
-      "start": "12:50",
-      "end": "14:10",
-      "discipline": "Соціальна робота в громаді",
-      "type": "Семінарські",
-      "room": "онлайн, 1",
-      "teacher": "Варивода Ю. Ю.",
-      "audience": "group"
-    },
     {
       "date": "2026-11-17",
       "start": "09:45",
@@ -284,6 +244,36 @@
       "type": "Практичні",
       "room": "онлайн, 1",
       "teacher": "Макарчук В. І.",
+      "audience": "group"
+    },
+    {
+      "date": "2026-11-30",
+      "start": "08:15",
+      "end": "09:35",
+      "discipline": "Іноземна мова",
+      "type": "Практичні",
+      "room": "онлайн, 1",
+      "teacher": "Насакіна С. В.",
+      "audience": "group"
+    },
+    {
+      "date": "2026-11-30",
+      "start": "09:45",
+      "end": "11:05",
+      "discipline": "Сільськогосподарські машини",
+      "type": "Лекції",
+      "room": "онлайн, 1",
+      "teacher": "Дударев І. І.",
+      "audience": "group"
+    },
+    {
+      "date": "2026-11-30",
+      "start": "11:15",
+      "end": "12:35",
+      "discipline": "Теплотехніка та гідравлика",
+      "type": "Лекції",
+      "room": "онлайн, 1",
+      "teacher": "Уминський С. М.",
       "audience": "group"
     }
   ]
