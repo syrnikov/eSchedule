@@ -2,30 +2,10 @@
   "group": "208-бак-3к денне 26-27",
   "subgroup": "1б",
   "source": "https://osau.edu.ua/pro-universytet/pratsivnykam/rozklad-zanyat/",
-  "fetchedAt": "2026-11-24T19:48:24Z",
-  "rangeFrom": "2026-11-24",
-  "rangeTo": "2026-12-07",
+  "fetchedAt": "2026-11-25T03:52:24Z",
+  "rangeFrom": "2026-11-25",
+  "rangeTo": "2026-12-08",
   "classes": [
-    {
-      "date": "2026-11-24",
-      "start": "08:15",
-      "end": "09:35",
-      "discipline": "ІТ-технології в проектуванні",
-      "type": "Лабораторні",
-      "room": "онлайн, 1",
-      "teacher": "Мартинова О. Б.",
-      "audience": "subgroup"
-    },
-    {
-      "date": "2026-11-24",
-      "start": "09:45",
-      "end": "11:05",
-      "discipline": "Технологія машинобудування",
-      "type": "Лекції",
-      "room": "онлайн, 1",
-      "teacher": "Житков С. С.",
-      "audience": "group"
-    },
     {
       "date": "2026-11-25",
       "start": "12:50",
@@ -222,6 +202,16 @@
       "end": "11:05",
       "discipline": "Іноземна мова",
       "type": "Консультація",
+      "room": "онлайн, 1",
+      "teacher": "Насакіна С. В.",
+      "audience": "group"
+    },
+    {
+      "date": "2026-12-08",
+      "start": "08:15",
+      "end": "09:35",
+      "discipline": "Іноземна мова",
+      "type": "Іспит",
       "room": "онлайн, 1",
       "teacher": "Насакіна С. В.",
       "audience": "group"
